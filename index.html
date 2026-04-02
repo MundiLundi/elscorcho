@@ -44,6 +44,12 @@
       margin-left: 6px; vertical-align: middle; letter-spacing: 0.02em;
     }
     .mult-badge[hidden] { display: none !important; }
+    .rebirth-mult-badge {
+      font-size: 10px; font-weight: 800; color: #7dd3fc;
+      background: #0c1820; border-radius: 5px; padding: 2px 6px;
+      margin-left: 6px; vertical-align: middle; letter-spacing: 0.02em;
+    }
+    .rebirth-mult-badge[hidden] { display: none !important; }
     .shop-trigger {
       background: linear-gradient(135deg, #1e1e3a, #2a1a3a);
       border: 1px solid #4a3a6a; border-radius: 8px;
@@ -123,6 +129,14 @@
     }
     .buy-btn.battle-pass:hover:not(:disabled) {
       background: linear-gradient(135deg, #9d6a18, #dcb82e);
+      transform: scale(1.04);
+    }
+    .buy-btn.rebirth-btn {
+      background: linear-gradient(135deg, #14532d, #22c55e);
+      color: #fff;
+    }
+    .buy-btn.rebirth-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #166534, #4ade80);
       transform: scale(1.04);
     }
     .shop-divider { height: 1px; background: #1c1c1c; margin: 0 20px; }
@@ -252,7 +266,7 @@
       <div class="points-hud" id="points-hud">
         <div class="points-icon">🎯</div>
         <div class="points-info">
-          <div class="points-label">Total Points<span class="mult-badge" id="mult-badge" hidden></span></div>
+          <div class="points-label">Total Points<span class="mult-badge" id="mult-badge" hidden></span><span class="rebirth-mult-badge" id="rebirth-mult-badge" hidden></span></div>
           <div class="points-value" id="total-points">0 <span>pts</span></div>
         </div>
         <div class="progress-wrap">
@@ -265,6 +279,10 @@
         <div class="session-badge">
           <div class="session-label">This video</div>
           <div class="session-value" id="session-points">+0</div>
+        </div>
+        <div class="session-badge" title="Times you have rebirthed after buying everything">
+          <div class="session-label">Rebirths</div>
+          <div class="session-value" id="rebirth-count">0</div>
         </div>
         <div class="shop-trigger" onclick="openShop()">
           <div class="shop-trigger-icon">🛒</div>
@@ -335,6 +353,8 @@ Music video by Weezer</div>
     <div id="shop-multiplier"></div>
     <div class="shop-section-title">Features &amp; Passes</div>
     <div id="shop-extras"></div>
+    <div class="shop-section-title">Rebirth · max out the shop, then reset for a permanent boost</div>
+    <div id="shop-rebirth"></div>
     <div style="height:16px"></div>
   </div>
 </div>
@@ -396,6 +416,7 @@ function saveState()  {
     totalPoints, owned:[...owned], activeId,
     autoplayOwned, battlePassOwned,
     pointMultiplier,
+    rebirthCount,
   }));
 }
 
@@ -406,9 +427,23 @@ let activeId    = S.activeId   || null;
 let autoplayOwned   = !!S.autoplayOwned;
 let battlePassOwned = !!S.battlePassOwned;
 let pointMultiplier = Math.min(MULT_MAX, Math.max(1, Number(S.pointMultiplier) || 1));
+let rebirthCount = Math.max(0, Number(S.rebirthCount) | 0);
 
 function effectiveMultiplier() {
   return Math.min(MULT_MAX, Math.max(1, pointMultiplier | 0));
+}
+/** Permanent income multiplier from rebirths: 1st rebirth → 2×, then +1 each time (3×, 4×, …). */
+function rebirthIncomeMultiplier() {
+  return rebirthCount + 1;
+}
+function totalEarnMultiplier() {
+  return effectiveMultiplier() * rebirthIncomeMultiplier();
+}
+function allPurchasesComplete() {
+  if (UPGRADES.some(u => !owned.has(u.id))) return false;
+  if (pointMultiplier < MULT_MAX) return false;
+  if (!autoplayOwned || !battlePassOwned) return false;
+  return true;
 }
 function nextMultiplierStepCost() {
   if (pointMultiplier >= MULT_MAX) return null;
@@ -434,15 +469,21 @@ function resetSession()  { stopTracking(); watchedSecs = sessionPts = tickSecs =
 
 /** @param {boolean} fromVideoComplete bonus when finishing a watch */
 function award(fromVideoComplete = false) {
-  const m = effectiveMultiplier();
+  const m = totalEarnMultiplier();
   totalPoints += m;
   sessionPts += m;
   tickSecs = 0;
+  const shopM = effectiveMultiplier();
+  const rbM = rebirthIncomeMultiplier();
   let popTxt;
   if (fromVideoComplete) {
     popTxt = m > 1 ? `🎉 +${m}` : '🎉 +1';
   } else {
-    popTxt = m > 1 ? `+${m} (${m}×)` : '+1';
+    if (m > 1) {
+      popTxt = rbM > 1 ? `+${m} (${shopM}× · ${rbM}×)` : `+${m} (${shopM}×)`;
+    } else {
+      popTxt = '+1';
+    }
   }
   saveState(); spawnPop(popTxt); updateHUD(); renderShop();
 }
@@ -450,14 +491,23 @@ function award(fromVideoComplete = false) {
 // ─── HUD ──────────────────────────────────────────────────────────────────────
 function updateHUD() {
   const secs = activeSecs();
-  const m = effectiveMultiplier();
+  const shopM = effectiveMultiplier();
   const mb = document.getElementById('mult-badge');
-  if (m > 1) {
-    mb.textContent = `${m}×`;
+  if (shopM > 1) {
+    mb.textContent = `${shopM}×`;
     mb.removeAttribute('hidden');
   } else {
     mb.setAttribute('hidden', '');
   }
+  const rbM = rebirthIncomeMultiplier();
+  const rbb = document.getElementById('rebirth-mult-badge');
+  if (rbM > 1) {
+    rbb.textContent = `R ${rbM}×`;
+    rbb.removeAttribute('hidden');
+  } else {
+    rbb.setAttribute('hidden', '');
+  }
+  document.getElementById('rebirth-count').textContent = String(rebirthCount);
   document.getElementById('total-points').innerHTML = `${totalPoints} <span>pts</span>`;
   document.getElementById('session-points').textContent = `+${sessionPts}`;
   document.getElementById('shop-balance').textContent   = totalPoints;
@@ -643,20 +693,22 @@ function renderShop() {
   mwrap.innerHTML = '';
   const mCur = effectiveMultiplier();
   if (mCur >= MULT_MAX) {
+    const perTick = MULT_MAX * rebirthIncomeMultiplier();
     const div = document.createElement('div');
     div.className = 'shop-item';
     div.innerHTML = `
       <div class="shop-item-icon" style="background:#241828">10×</div>
       <div class="shop-item-body">
         <div class="shop-item-name">Point multiplier maxed</div>
-        <div class="shop-item-desc">You earn <strong>10 points</strong> every tick and on full video bonuses.</div>
-        <div class="shop-item-unlocked">🔥 ${MULT_MAX}× active</div>
+        <div class="shop-item-desc">Shop is <strong>${MULT_MAX}×</strong>; with your rebirth boost you earn <strong>${perTick} points</strong> per tick and on full video bonuses.</div>
+        <div class="shop-item-unlocked">🔥 ${MULT_MAX}× shop × ${rebirthIncomeMultiplier()}× rebirth</div>
       </div>
       <div class="shop-item-right"><span class="buy-btn tag-owned">Max</span></div>`;
     mwrap.appendChild(div);
   } else {
     const cost = nextMultiplierStepCost();
     const nextM = mCur + 1;
+    const rbm = rebirthIncomeMultiplier();
     const canAfford = totalPoints >= cost;
     const div = document.createElement('div');
     div.className = 'shop-item' + (canAfford ? ' can-buy' : '');
@@ -665,8 +717,8 @@ function renderShop() {
       <div class="shop-item-icon" style="background:#2a1420">✨</div>
       <div class="shop-item-body">
         <div class="shop-item-name">Upgrade to ${nextM}×</div>
-        <div class="shop-item-desc">Each timer tick and completion bonus grants <strong>${nextM} points</strong> instead of ${mCur}. Next: <strong>${nextM}×</strong> (max ${MULT_MAX}×).</div>
-        <div class="shop-item-unlocked" style="margin-top:4px">Now: ${mCur}× earnings</div>
+        <div class="shop-item-desc">Each tick and completion bonus: <strong>${nextM * rbm} pts</strong> (shop ${nextM}× × rebirth ${rbm}×). Max shop ${MULT_MAX}×.</div>
+        <div class="shop-item-unlocked" style="margin-top:4px">Now: ${mCur * rbm} pts per earn (${mCur}× × ${rbm}×)</div>
       </div>
       <div class="shop-item-right">
         <button class="buy-btn" ${canAfford ? '' : 'disabled'}>${canAfford ? `Buy · ${cost} pts` : `Need ${cost - totalPoints} more`}</button>
@@ -704,6 +756,63 @@ function renderShop() {
     xwrap.appendChild(div);
     if (xi < EXTRA_SHOP.length - 1) { const d = document.createElement('div'); d.className = 'shop-divider'; xwrap.appendChild(d); }
   });
+
+  const rbWrap = document.getElementById('shop-rebirth');
+  rbWrap.innerHTML = '';
+  const canRb = allPurchasesComplete();
+  const nextRunR = rebirthCount + 2;
+  const curR = rebirthIncomeMultiplier();
+  const rbDiv = document.createElement('div');
+  rbDiv.className = 'shop-item' + (canRb ? ' can-buy' : '');
+  if (canRb) rbDiv.onclick = () => rebirth();
+  rbDiv.innerHTML = `
+    <div class="shop-item-icon" style="background:#0f2f1a">🔁</div>
+    <div class="shop-item-body">
+      <div class="shop-item-name">Rebirth</div>
+      <div class="shop-item-desc">Requires every timer upgrade, <strong>${MULT_MAX}×</strong> point multiplier, <strong>Instant Play</strong>, and <strong>Battle Pass</strong>. Resets points and all purchases, keeps your rebirth tier. Permanent boost: <strong>${curR}×</strong> → <strong>${nextRunR}×</strong> on points earned (stacks with shop multiplier).</div>
+      ${canRb ? `<div class="shop-item-unlocked">Ready — your next tier is ${nextRunR}×</div>` : `<div class="shop-item-locked">🔒 Max the shop first</div>`}
+    </div>
+    <div class="shop-item-right">
+      ${canRb
+        ? `<button type="button" class="buy-btn rebirth-btn">🔁 Rebirth</button>`
+        : `<button type="button" class="buy-btn" disabled>Locked</button>`}
+    </div>`;
+  rbWrap.appendChild(rbDiv);
+}
+
+function rebirth() {
+  if (!allPurchasesComplete()) return;
+  rebirthCount++;
+  totalPoints = 0;
+  owned = new Set();
+  activeId = null;
+  pointMultiplier = 1;
+  autoplayOwned = false;
+  battlePassOwned = false;
+  userChoseYoutubeSound = false;
+  autoplayUnmuteHooked = false;
+  tickSecs = 0;
+  sessionPts = 0;
+  watchedSecs = 0;
+  hasStarted = false;
+  stopTracking();
+  videos = buildVideoList();
+  currentFeedIndex = 0;
+  currentId = videos[0].id;
+  document.getElementById('main-title').textContent = FREE_VIDEO.title;
+  if (ytPlayer) {
+    try {
+      ytPlayer.loadVideoById(FREE_VIDEO.id);
+    } catch (_) {}
+  }
+  renderFeed();
+  saveState();
+  spawnPop(`🔁 Rebirth #${rebirthCount}!`);
+  updateHUD();
+  renderShop();
+  closeShop();
+  const hud = document.getElementById('points-hud');
+  hud.classList.remove('hud-flash'); void hud.offsetWidth; hud.classList.add('hud-flash');
 }
 
 function purchaseMultiplier() {
