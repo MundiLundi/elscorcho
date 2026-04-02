@@ -53,32 +53,14 @@
     .shop-trigger:hover { border-color: #7c5cbc; background: linear-gradient(135deg, #252545, #321f4a); }
     .shop-trigger-icon { font-size: 18px; }
     .shop-trigger-label { font-size: 10px; color: #9a7acc; text-transform: uppercase; letter-spacing: 0.6px; }
-    .timer-chip {<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Lets the YouTube iframe use muted autoplay (blocked otherwise in Chromium / Safari) -->
-  <meta http-equiv="Permissions-Policy" content="autoplay=*, encrypted-media=*, fullscreen=*">
-  <title>El Scorcho</title>
-  <link rel="icon" href="favicon.png">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background: #0f0f0f; color: #f1f1f1; }
-    .layout { display: flex; gap: 0; min-height: 100vh; }
-    .main { flex: 1; padding: 20px 16px 20px 24px; max-width: calc(100% - 360px); overflow-y: auto; }
-    .video-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 10px; overflow: hidden; }
-    .video-wrap iframe,
-    .video-wrap > div { width: 100% !important; height: 100% !important; border: none; display: block; }
-    .loading-overlay { position: absolute; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.15s; z-index: 10; }
-    .loading-overlay.show { opacity: 1; pointer-events: all; }
-    .spinner { width: 36px; height: 36px; border: 3px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .timer-chip {
+      font-size: 11px; color: #ff6b35; font-weight: 700;
+      background: #1a1000; border-radius: 5px; padding: 2px 6px;
+    }
 
-    /* ── Points HUD ─────────────────────────────────────────────── */
-    .points-hud {
-      display: flex; align-items: center; gap: 14px;
-      background: #nset: 0; background: rgba(0,0,0,0.75);
+    /* ── Shop modal ─────────────────────────────────────────────── */
+    .shop-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
       z-index: 1000; display: flex; align-items: center; justify-content: center;
       opacity: 0; pointer-events: none; transition: opacity 0.2s;
     }
@@ -302,13 +284,13 @@
       </div>
 
       <div class="action-row">
-        <button class="action-btn">👍 572M <span class="divider"></span> 👎</button>
+        <button class="action-btn">👍 54K <span class="divider"></span> 👎</button>
         <button class="action-btn" onclick="copyLink()">↗ Share</button>
         <span class="copy-toast" id="copy-toast">Link copied!</span>
       </div>
 
       <div class="desc-box" onclick="toggleDesc()">
-        <div class="desc-stats">8.4M views &nbsp;·&nbsp;</div>
+        <div class="desc-stats">8.4M views &nbsp;·&nbsp; 16 years ago</div>
         <div class="desc-text collapsed" id="desc-text"> What's your favorite Weezer video?: <a href="https://www.udiscovermusic.com" target="_blank" style="color:#3ea6ff;text-decoration:none;">uDiscoverMusic</a>
 
 Facebook: <a href="https://www.facebook.com/weezer" target="_blank" style="color:#3ea6ff;text-decoration:none;">facebook.com/weezer</a>
