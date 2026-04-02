@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Lets the YouTube iframe use muted autoplay (blocked otherwise in Chromium / Safari) -->
+  <meta http-equiv="Permissions-Policy" content="autoplay=*, encrypted-media=*, fullscreen=*">
   <title>El Scorcho</title>
   <link rel="icon" href="favicon.png">
   <style>
@@ -350,7 +352,7 @@ Music video by Weezer performing El Scorcho. (C) 2004 Geffen Records</div>
 
 <script>
 /** Set to false for production — removes admin UI and P cheat */
-const ADMIN_MODE = true;
+const ADMIN_MODE = false;
 
 // ─── Upgrade tiers ────────────────────────────────────────────────────────────
 const UPGRADES = [
@@ -380,7 +382,7 @@ const MULT_STEP_COST = [35, 80, 150, 260, 400, 580, 800, 1100, 1500];
 
 const EXTRA_SHOP = [
   { id:'feat_autoplay', name:'Instant Play', icon:'▶️', bg:'#0d1a2a', cost:40,
-    desc:'Videos auto-start muted (browser policy), then play. Click anywhere or use the player to unmute.',
+    desc:'Videos start muted & play automatically, including the next one when a video finishes (Up Next queue).',
     battlePassClass: false },
   { id:'feat_battlepass', name:'Weezer Battle Pass', icon:'🎫', bg:'#2a2210', cost:2500,
     desc:'Unlock the full Up Next playlist: Buddy Holly, Say It Ain’t So, and more.',
@@ -479,16 +481,41 @@ function spawnPop(label) {
 // ─── YouTube IFrame API ───────────────────────────────────────────────────────
 (function() { const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); })();
 
+/** Required on the iframe or autoplay is denied even when muted (Chrome policy). */
+const YT_IFRAME_ALLOW = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
+
+function httpPageOrigin() {
+  try {
+    const o = window.location.origin;
+    if (o && o !== 'null' && /^https?:/i.test(o)) return o;
+  } catch (_) {}
+  return undefined;
+}
+
+function patchYtIframe() {
+  const f = document.querySelector('#player iframe');
+  if (!f) return;
+  f.setAttribute('allow', YT_IFRAME_ALLOW);
+  f.setAttribute('allowfullscreen', '');
+  Object.assign(f.style, { width:'100%', height:'100%', border:'none', display:'block' });
+}
+
 function onYouTubeIframeAPIReady() {
   const ap = autoplayOwned ? 1 : 0;
+  const playerVars = {
+    autoplay: ap,
+    mute: ap,
+    rel: 0,
+    modestbranding: 1,
+    enablejsapi: 1,
+    playsinline: 1,
+  };
+  const orig = httpPageOrigin();
+  if (orig) playerVars.origin = orig;
+
   ytPlayer = new YT.Player('player', {
     videoId: FREE_VIDEO.id,
-    playerVars: {
-      autoplay: ap,
-      mute: ap,
-      rel: 0,
-      modestbranding: 1,
-    },
+    playerVars,
     events: { onReady: onPlayerReady, onStateChange: onStateChange }
   });
 }
@@ -500,9 +527,20 @@ let userChoseYoutubeSound = false;
 function tryStartAutoplayPlayback() {
   if (!autoplayOwned || !ytPlayer) return;
   try {
+    patchYtIframe();
     if (!userChoseYoutubeSound) ytPlayer.mute();
     ytPlayer.playVideo();
   } catch (_) {}
+}
+
+/** YouTube often stays in CUED/PAUSED briefly; short retries help play() stick. */
+function scheduleAutoplayRetries() {
+  if (!autoplayOwned) return;
+  [0, 100, 350, 700, 1400].forEach(ms => {
+    setTimeout(() => {
+      if (autoplayOwned && ytPlayer) tryStartAutoplayPlayback();
+    }, ms);
+  });
 }
 
 let autoplayUnmuteHooked = false;
@@ -511,17 +549,21 @@ function hookAutoplayUnmuteOnFirstGesture() {
   autoplayUnmuteHooked = true;
   const unmute = () => {
     userChoseYoutubeSound = true;
-    try { ytPlayer?.unMute(); } catch (_) {}
+    try {
+      ytPlayer?.unMute();
+      ytPlayer?.setVolume(100);
+    } catch (_) {}
   };
   document.addEventListener('click', unmute, { capture: true, once: true });
   document.addEventListener('keydown', unmute, { once: true });
+  document.addEventListener('touchend', unmute, { capture: true, once: true });
 }
 
 function onPlayerReady() {
-  const f = document.querySelector('#player iframe');
-  if (f) Object.assign(f.style, { width:'100%', height:'100%', border:'none', display:'block' });
+  patchYtIframe();
   if (autoplayOwned) {
     tryStartAutoplayPlayback();
+    scheduleAutoplayRetries();
     hookAutoplayUnmuteOnFirstGesture();
   }
   updateHUD();
@@ -531,18 +573,26 @@ function tryAutoplayAfterLoad() {
   if (!autoplayOwned || !ytPlayer) return;
   setTimeout(() => {
     tryStartAutoplayPlayback();
+    scheduleAutoplayRetries();
     hookAutoplayUnmuteOnFirstGesture();
-  }, 320);
+  }, 50);
 }
 function onStateChange(e) {
   const P = YT.PlayerState;
+  patchYtIframe();
+  if (autoplayOwned && e.data === P.CUED) tryStartAutoplayPlayback();
   if (e.data === P.PLAYING)  { hasStarted = true; startTracking(); }
   if (e.data === P.PAUSED || e.data === P.BUFFERING) { stopTracking(); updateHUD(); }
   if (e.data === P.ENDED) {
     stopTracking();
     const dur = ytPlayer.getDuration();
     if (hasStarted && dur > 0 && watchedSecs / dur >= SKIP_THRESH) { award(true); }
-    resetSession();
+    if (autoplayOwned && videos.length > 0) {
+      const nextIdx = (currentFeedIndex + 1) % videos.length;
+      goToQueueIndex(nextIdx, false);
+    } else {
+      resetSession();
+    }
   }
 }
 
@@ -627,7 +677,8 @@ function renderShop() {
   const xwrap = document.getElementById('shop-extras');
   xwrap.innerHTML = '';
   EXTRA_SHOP.forEach((ex, xi) => {
-    const isOwned = ex.id === 'feat_autoplay' ? autoplayOwned : battlePassOwned;
+    const isOwned = ex.id === 'feat_autoplay' ? autoplayOwned
+      : ex.id === 'feat_battlepass' ? battlePassOwned : false;
     const canAfford = totalPoints >= ex.cost;
     const div = document.createElement('div');
     div.className = 'shop-item' + (!isOwned && canAfford ? ' can-buy' : '');
@@ -647,7 +698,7 @@ function renderShop() {
         <div class="shop-item-name">${ex.name}</div>
         <div class="shop-item-desc">${ex.desc}</div>
         ${isOwned && ex.id === 'feat_battlepass' ? `<div class="shop-item-unlocked">Playlist unlocked in Up Next</div>` : ''}
-        ${isOwned && ex.id === 'feat_autoplay' ? `<div class="shop-item-unlocked">Autoplay on · muted until you click (browser rule)</div>` : ''}
+        ${isOwned && ex.id === 'feat_autoplay' ? `<div class="shop-item-unlocked">Autoplay + auto-advance queue (muted until you interact)</div>` : ''}
       </div>
       <div class="shop-item-right">${rightHTML}</div>`;
     xwrap.appendChild(div);
@@ -682,6 +733,7 @@ function purchaseExtra(id) {
     userChoseYoutubeSound = false;
     autoplayUnmuteHooked = false;
     tryStartAutoplayPlayback();
+    scheduleAutoplayRetries();
     hookAutoplayUnmuteOnFirstGesture();
   }
   if (id === 'feat_battlepass') {
@@ -693,6 +745,7 @@ function purchaseExtra(id) {
     currentId = videos[currentFeedIndex].id;
     renderFeed();
   }
+
   saveState();
   spawnPop(id === 'feat_battlepass' ? '🎫' : '▶️');
   updateHUD();
@@ -733,7 +786,8 @@ let videos = buildVideoList();
 let currentFeedIndex = 0;
 let currentId = videos[0].id;
 
-function changeVideo(index) {
+/** @param {boolean} useLoaderDelay sidebar picks use a short spinner delay */
+function goToQueueIndex(index, useLoaderDelay) {
   const v = videos[index];
   if (!ytPlayer || !v) return;
   resetSession();
@@ -741,12 +795,22 @@ function changeVideo(index) {
   currentId = v.id;
   document.getElementById('main-title').textContent = v.title;
   const loader = document.getElementById('loader');
-  loader.classList.add('show'); renderFeed();
-  setTimeout(() => {
+  const runLoad = () => {
     ytPlayer.loadVideoById(v.id);
     tryAutoplayAfterLoad();
-    setTimeout(() => loader.classList.remove('show'), 600);
-  }, 400);
+    if (useLoaderDelay) setTimeout(() => loader.classList.remove('show'), 600);
+  };
+  renderFeed();
+  if (useLoaderDelay) {
+    loader.classList.add('show');
+    setTimeout(runLoad, 400);
+  } else {
+    setTimeout(runLoad, 120);
+  }
+}
+
+function changeVideo(index) {
+  goToQueueIndex(index, true);
 }
 
 function renderFeed() {
