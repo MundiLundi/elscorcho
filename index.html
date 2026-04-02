@@ -11,13 +11,137 @@
     .layout { display: flex; gap: 0; min-height: 100vh; }
     .main { flex: 1; padding: 20px 16px 20px 24px; max-width: calc(100% - 360px); overflow-y: auto; }
     .video-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 10px; overflow: hidden; }
-    .video-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+    .video-wrap iframe,
+    .video-wrap > div { width: 100% !important; height: 100% !important; border: none; display: block; }
     .loading-overlay { position: absolute; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.15s; z-index: 10; }
     .loading-overlay.show { opacity: 1; pointer-events: all; }
     .spinner { width: 36px; height: 36px; border: 3px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Video meta */
+    /* ── Points HUD ─────────────────────────────────────────────── */
+    .points-hud {
+      display: flex; align-items: center; gap: 14px;
+      background: #1a1a1a; border: 1px solid #2a2a2a;
+      border-radius: 12px; padding: 10px 16px; margin-bottom: 10px;
+    }
+    .points-icon { font-size: 20px; }
+    .points-info { flex: 1; min-width: 0; }
+    .points-label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
+    .points-value { font-size: 22px; font-weight: 700; color: #f1f1f1; line-height: 1; }
+    .points-value span { font-size: 13px; font-weight: 400; color: #aaa; margin-left: 4px; }
+    .progress-wrap { flex: 2; min-width: 0; }
+    .progress-label { font-size: 11px; color: #aaa; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+    .progress-bar { height: 6px; background: #2a2a2a; border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #ff0000, #ff6b35); border-radius: 3px; transition: width 0.5s ease; width: 0%; }
+    .session-badge { background: #272727; border-radius: 8px; padding: 6px 12px; text-align: center; flex-shrink: 0; }
+    .session-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.6px; }
+    .session-value { font-size: 15px; font-weight: 700; color: #f1f1f1; }
+    .mult-badge {
+      font-size: 10px; font-weight: 800; color: #ffb347;
+      background: #2a1810; border-radius: 5px; padding: 2px 6px;
+      margin-left: 6px; vertical-align: middle; letter-spacing: 0.02em;
+    }
+    .mult-badge[hidden] { display: none !important; }
+    .shop-trigger {
+      background: linear-gradient(135deg, #1e1e3a, #2a1a3a);
+      border: 1px solid #4a3a6a; border-radius: 8px;
+      padding: 6px 12px; text-align: center; cursor: pointer;
+      flex-shrink: 0; transition: all 0.2s; user-select: none;
+    }
+    .shop-trigger:hover { border-color: #7c5cbc; background: linear-gradient(135deg, #252545, #321f4a); }
+    .shop-trigger-icon { font-size: 18px; }
+    .shop-trigger-label { font-size: 10px; color: #9a7acc; text-transform: uppercase; letter-spacing: 0.6px; }
+    .timer-chip {
+      font-size: 11px; color: #ff6b35; font-weight: 700;
+      background: #1a1000; border-radius: 5px; padding: 2px 6px;
+    }
+
+    /* ── Shop modal ─────────────────────────────────────────────── */
+    .shop-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 1000; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .shop-backdrop.open { opacity: 1; pointer-events: all; }
+    .shop-modal {
+      background: #141414; border: 1px solid #2a2a2a;
+      border-radius: 16px; width: 440px; max-width: calc(100vw - 32px);
+      max-height: 90vh; overflow-y: auto;
+      transform: translateY(20px); transition: transform 0.2s;
+    }
+    .shop-backdrop.open .shop-modal { transform: translateY(0); }
+    .shop-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 20px 14px; border-bottom: 1px solid #222;
+      position: sticky; top: 0; background: #141414; z-index: 1;
+    }
+    .shop-title { font-size: 17px; font-weight: 700; }
+    .shop-balance { font-size: 13px; color: #aaa; margin-top: 2px; }
+    .shop-balance strong { color: #f1f1f1; }
+    .shop-close {
+      background: #272727; border: none; color: #f1f1f1;
+      width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+      font-size: 14px; display: flex; align-items: center; justify-content: center;
+    }
+    .shop-close:hover { background: #3f3f3f; }
+    .shop-section-title {
+      font-size: 11px; color: #666; text-transform: uppercase;
+      letter-spacing: 0.8px; padding: 14px 20px 8px;
+    }
+    .shop-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 20px; transition: background 0.15s;
+    }
+    .shop-item.can-buy { cursor: pointer; }
+    .shop-item.can-buy:hover { background: #1a1a1a; }
+    .shop-item-icon {
+      width: 46px; height: 46px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+      flex-shrink: 0;
+    }
+    .shop-item-body { flex: 1; min-width: 0; }
+    .shop-item-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
+    .active-badge { font-size: 10px; color: #4caf50; background: #0d2010; border-radius: 4px; padding: 2px 6px; font-weight: 700; letter-spacing: 0.4px; }
+    .shop-item-desc { font-size: 12px; color: #888; line-height: 1.5; }
+    .shop-item-unlocked { font-size: 11px; color: #4caf50; margin-top: 4px; font-weight: 600; }
+    .shop-item-locked { font-size: 11px; color: #555; margin-top: 4px; }
+    .shop-item-right { flex-shrink: 0; }
+    .buy-btn {
+      background: linear-gradient(135deg, #4a2a8a, #7c3cbc);
+      border: none; color: #fff; border-radius: 8px;
+      padding: 8px 14px; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap; display: block;
+    }
+    .buy-btn:hover:not(:disabled) { background: linear-gradient(135deg, #5a3a9a, #8c4ccc); transform: scale(1.04); }
+    .buy-btn:disabled { background: #222; color: #444; cursor: not-allowed; }
+    .buy-btn.tag-owned { background: #0d2010; color: #4caf50; cursor: default; pointer-events: none; }
+    .buy-btn.battle-pass {
+      background: linear-gradient(135deg, #8a5a12, #c9a227);
+      color: #1a1200;
+    }
+    .buy-btn.battle-pass:hover:not(:disabled) {
+      background: linear-gradient(135deg, #9d6a18, #dcb82e);
+      transform: scale(1.04);
+    }
+    .shop-divider { height: 1px; background: #1c1c1c; margin: 0 20px; }
+
+    /* ── Point pop ───────────────────────────────────────────────── */
+    .point-pop {
+      position: fixed; pointer-events: none; z-index: 9999;
+      font-size: 15px; font-weight: 700; color: #ff6b35;
+      animation: floatUp 1.3s ease-out forwards;
+    }
+    @keyframes floatUp {
+      0%   { opacity: 1; transform: translateY(0) scale(1.2); }
+      100% { opacity: 0; transform: translateY(-70px) scale(0.8); }
+    }
+    @keyframes purchaseFlash {
+      0%,100% { border-color: #2a2a2a; }
+      50%      { border-color: #7c3cbc; box-shadow: 0 0 16px rgba(124,60,188,0.4); }
+    }
+    .hud-flash { animation: purchaseFlash 0.5s ease; }
+
+    /* ── Video meta ──────────────────────────────────────────────── */
     .video-meta { padding: 12px 0 8px; }
     .video-title { font-size: 18px; font-weight: 600; color: #f1f1f1; line-height: 1.3; margin-bottom: 10px; }
     .channel-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
@@ -32,15 +156,11 @@
     .action-btn .divider { width: 1px; height: 16px; background: #555; margin: 0 2px; }
     .copy-toast { background: #f1f1f1; color: #0f0f0f; border-radius: 20px; padding: 8px 14px; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
     .copy-toast.show { opacity: 1; }
-
-    /* Description box */
     .desc-box { background: #272727; border-radius: 10px; padding: 12px 14px; margin-bottom: 24px; cursor: pointer; }
     .desc-stats { font-size: 13px; font-weight: 600; color: #f1f1f1; margin-bottom: 6px; }
     .desc-text { font-size: 13px; color: #f1f1f1; line-height: 1.6; white-space: pre-wrap; }
     .desc-text.collapsed { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .desc-toggle { font-size: 13px; font-weight: 600; color: #f1f1f1; margin-top: 8px; }
-
-    /* Comments */
     .comments-section { padding-bottom: 40px; }
     .comments-header { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
     .comment-input-row { display: flex; gap: 12px; margin-bottom: 28px; }
@@ -57,8 +177,6 @@
     .comment-like:hover { color: #f1f1f1; }
     .reply-btn { font-size: 12px; font-weight: 700; color: #f1f1f1; background: none; border: none; cursor: pointer; }
     .reply-btn:hover { color: #aaa; }
-
-    /* Sidebar */
     .sidebar { width: 360px; padding: 20px 16px 20px 8px; overflow-y: auto; flex-shrink: 0; }
     .sidebar-title { font-size: 13px; color: #aaa; margin-bottom: 12px; font-weight: 500; letter-spacing: 0.3px; }
     .card { display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer; border-radius: 8px; padding: 4px; transition: background 0.15s; }
@@ -80,12 +198,41 @@
       .video-meta { padding: 10px 12px 8px; }
       .comments-section { padding: 0 12px 40px; }
       .sidebar { display: none !important; }
+      .points-hud { margin: 8px 0; border-radius: 10px; flex-wrap: wrap; gap: 10px; }
+      .progress-wrap { min-width: 100%; order: 4; }
     }
     @media (orientation: landscape) and (max-height: 500px) {
       .sidebar { display: none !important; }
       .main { max-width: 100% !important; width: 100% !important; padding: 0; }
       .video-wrap { border-radius: 0; }
     }
+
+    /* ── Dev admin (set ADMIN_MODE = false before release) ─────────── */
+    .admin-panel {
+      position: fixed; bottom: 12px; left: 12px; z-index: 2000;
+      background: #1a1008; border: 1px solid #7c3c1a; border-radius: 10px;
+      padding: 10px 12px; font-size: 12px; color: #ffb366;
+      max-width: min(280px, calc(100vw - 24px));
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      display: none;
+    }
+    .admin-panel.open { display: block; }
+    .admin-panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #ff8833; margin-bottom: 8px; }
+    .admin-panel p { color: #ccc; line-height: 1.45; margin-bottom: 8px; }
+    .admin-panel kbd {
+      background: #2a1810; border: 1px solid #553220; border-radius: 4px;
+      padding: 1px 6px; font-family: inherit; font-size: 11px; color: #fff;
+    }
+    .admin-grant-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .admin-grant-row input[type="number"] {
+      width: 72px; background: #0f0f0f; border: 1px solid #443322; color: #f1f1f1;
+      border-radius: 6px; padding: 6px 8px; font-size: 13px;
+    }
+    .admin-grant-btn {
+      background: #7c3c1a; border: none; color: #fff; border-radius: 6px;
+      padding: 6px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .admin-grant-btn:hover { background: #a34d22; }
   </style>
 </head>
 <body>
@@ -93,17 +240,36 @@
 <div class="layout">
   <div class="main">
     <div class="video-wrap">
-      <iframe id="player"
-        src="https://www.youtube.com/embed/okthJIVbi6g?autoplay=0&rel=0&modestbranding=1"
-        allow="autoplay; encrypted-media"
-        allowfullscreen>
-      </iframe>
-      <div class="loading-overlay" id="loader">
-        <div class="spinner"></div>
-      </div>
+      <div id="player"></div>
+      <div class="loading-overlay" id="loader"><div class="spinner"></div></div>
     </div>
 
     <div class="video-meta">
+
+      <!-- ── Points HUD ── -->
+      <div class="points-hud" id="points-hud">
+        <div class="points-icon">🎯</div>
+        <div class="points-info">
+          <div class="points-label">Total Points<span class="mult-badge" id="mult-badge" hidden></span></div>
+          <div class="points-value" id="total-points">0 <span>pts</span></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span id="next-point-label">Next point</span>
+            <span class="timer-chip" id="timer-chip">⏱ 45s</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+        <div class="session-badge">
+          <div class="session-label">This video</div>
+          <div class="session-value" id="session-points">+0</div>
+        </div>
+        <div class="shop-trigger" onclick="openShop()">
+          <div class="shop-trigger-icon">🛒</div>
+          <div class="shop-trigger-label">Shop</div>
+        </div>
+      </div>
+
       <div class="video-title" id="main-title">El Scorcho</div>
 
       <div class="channel-row">
@@ -117,33 +283,30 @@
 
       <div class="action-row">
         <button class="action-btn">👍 54K <span class="divider"></span> 👎</button>
-        <button class="action-btn" id="share-btn" onclick="copyLink()">↗ Share</button>
+        <button class="action-btn" onclick="copyLink()">↗ Share</button>
         <span class="copy-toast" id="copy-toast">Link copied!</span>
       </div>
 
-      <div class="desc-box" id="desc-box" onclick="toggleDesc()">
+      <div class="desc-box" onclick="toggleDesc()">
         <div class="desc-stats">8.4M views &nbsp;·&nbsp; 16 years ago</div>
-        <div class="desc-text collapsed" id="desc-text"> What's your favorite Weezer video?: <a href="https://www.udiscovermusic.com" target="_blank" style="color:#3ea6ff; text-decoration:none;">uDiscoverMusic</a>
+        <div class="desc-text collapsed" id="desc-text"> What's your favorite Weezer video?: <a href="https://www.udiscovermusic.com" target="_blank" style="color:#3ea6ff;text-decoration:none;">uDiscoverMusic</a>
 
-Facebook: <a href="https://www.facebook.com/weezer" target="_blank" style="color:#3ea6ff; text-decoration:none;">facebook.com/weezer</a>
-Twitter/X: <a href="https://twitter.com/weezer" target="_blank" style="color:#3ea6ff; text-decoration:none;">twitter.com/weezer</a>
-Instagram: <a href="https://www.instagram.com/weezer" target="_blank" style="color:#3ea6ff; text-decoration:none;">instagram.com/weezer</a>
-Website: <a href="https://weezer.com" target="_blank" style="color:#3ea6ff; text-decoration:none;">weezer.com</a>
+Facebook: <a href="https://www.facebook.com/weezer" target="_blank" style="color:#3ea6ff;text-decoration:none;">facebook.com/weezer</a>
+Twitter/X: <a href="https://twitter.com/weezer" target="_blank" style="color:#3ea6ff;text-decoration:none;">twitter.com/weezer</a>
+Instagram: <a href="https://www.instagram.com/weezer" target="_blank" style="color:#3ea6ff;text-decoration:none;">instagram.com/weezer</a>
+Website: <a href="https://weezer.com" target="_blank" style="color:#3ea6ff;text-decoration:none;">weezer.com</a>
 
-Music video by Weezer performing El Scorcho. (C) 2004 Geffen Records
-</div>
+Music video by Weezer performing El Scorcho. (C) 2004 Geffen Records</div>
         <div class="desc-toggle" id="desc-toggle">...more</div>
       </div>
     </div>
 
     <div class="comments-section">
       <div class="comments-header">847 Comments</div>
-
       <div class="comment-input-row">
         <div class="comment-avatar" style="background:#555;">Y</div>
         <input class="comment-input" type="text" placeholder="Add a comment...">
       </div>
-
       <div id="comments-list"></div>
     </div>
   </div>
@@ -154,150 +317,518 @@ Music video by Weezer performing El Scorcho. (C) 2004 Geffen Records
   </div>
 </div>
 
+<!-- ── Shop Modal ─────────────────────────────────────────────────────────── -->
+<div class="shop-backdrop" id="shop-backdrop" onclick="backdropClose(event)">
+  <div class="shop-modal">
+    <div class="shop-header">
+      <div>
+        <div class="shop-title">⚡ Speed Shop</div>
+        <div class="shop-balance">Balance: <strong id="shop-balance">0</strong> pts</div>
+      </div>
+      <button class="shop-close" onclick="closeShop()">✕</button>
+    </div>
+    <div class="shop-section-title">Timer Upgrades · spend points to earn faster</div>
+    <div id="shop-items"></div>
+    <div class="shop-section-title">Point multiplier · up to 10× per earn</div>
+    <div id="shop-multiplier"></div>
+    <div class="shop-section-title">Features &amp; Passes</div>
+    <div id="shop-extras"></div>
+    <div style="height:16px"></div>
+  </div>
+</div>
+
+<!-- Dev admin: delete this block and ADMIN_* script when shipping -->
+<div class="admin-panel open" id="admin-panel" aria-hidden="false">
+  <h3>Admin (dev only)</h3>
+  <p>Press <kbd>P</kbd> to add points (when not typing in a field). Toggle this panel with <kbd>`</kbd> (backtick).</p>
+  <div class="admin-grant-row">
+    <label for="admin-amount">Per press</label>
+    <input type="number" id="admin-amount" value="100" min="1" step="1" />
+    <button type="button" class="admin-grant-btn" id="admin-grant-once">Add once</button>
+  </div>
+</div>
+
 <script>
-  const videos = [
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-    { id: "okthJIVbi6g", title: "El Scorcho", channel: "Weezer", meta: "Pinkerton · 1996" },
-  ];
+/** Set to false for production — removes admin UI and P cheat */
+const ADMIN_MODE = false;
 
-  const comments = [
-    { name: "rivers_fan96",   color: "#5b4fcf", initial: "R", time: "3 years ago",  likes: "12K",   text: "this song coming on shuffle at 2am hits different every single time" },
-    { name: "shane_m",        color: "#cc0000", initial: "S", time: "1 year ago",   likes: "82.4K", text: "I think the \"El Scorcho\" lyrics are the first explicit Madama Butterfly reference?" },
-    { name: "weezerweekly",   color: "#1a73e8", initial: "W", time: "5 years ago",  likes: "6.1K",  text: "The fact that this was considered a flop when it came out makes me lose all faith in contemporary music criticism" },
-    { name: "guitarjunkie88", color: "#0f9d58", initial: "G", time: "2 years ago",  likes: "3.2K",  text: "Spike Jonze directed this and it shows. every frame looks like a memory you can't quite place" },
-    { name: "melonhead44",    color: "#f4a300", initial: "M", time: "8 months ago", likes: "2.9K",  text: "i played this at my wedding. my wife cried. i cried. the priest cried. 10/10 would recommend" },
-    { name: "quietstorm_77",  color: "#9c27b0", initial: "Q", time: "4 years ago",  likes: "1.7K",  text: "love it!" },
-    { name: "degreelessdan",  color: "#e91e63", initial: "D", time: "11 months ago",likes: "987",   text: "came here from a tiktok that used 0.3 seconds of this song and now I've listened to pinkerton front to back four times today" },
-    { name: "karlophone",     color: "green",   initial: "K", time: "6 years ago",  likes: "75.4K", text: "🙂" },
-  ];
+// ─── Upgrade tiers ────────────────────────────────────────────────────────────
+const UPGRADES = [
+  { id:'u1', name:'Quick Watch',  icon:'⚡', bg:'#111f11', cost:3,  seconds:30, desc:'Earn a point every 30 seconds of watch time.',  requires:null },
+  { id:'u2', name:'Binge Mode',   icon:'🔥', bg:'#1f1108', cost:8,  seconds:20, desc:'Earn a point every 20 seconds of watch time.',  requires:'u1' },
+  { id:'u3', name:'Hyper Stream', icon:'💜', bg:'#13102a', cost:20, seconds:10, desc:'Earn a point every 10 seconds of watch time.',  requires:'u2' },
+  { id:'u4', name:'Turbo Fan',    icon:'🌀', bg:'#1a0a1a', cost:50, seconds:5,  desc:'Earn a point every 5 seconds of watch time. Max speed!', requires:'u3' },
+];
 
-  let descExpanded = false;
-  let toastTimer = null;
+/** Bonus catalog unlocked by Battle Pass (official Weezer uploads) */
+const PASS_CATALOG = [
+  { id:'kemivUKb4f4',   title:'Buddy Holly',           channel:'Weezer', meta:'Blue Album · 1994' },
+  { id:'ENXvZ9YRjbo',   title:"Say It Ain't So",       channel:'Weezer', meta:'Blue Album · 1994' },
+  { id:'LHQqqM5sr7g',   title:'Undone (The Sweater Song)', channel:'Weezer', meta:'Blue Album · 1994' },
+  { id:'HL_WvOly7mY',   title:'Beverly Hills',         channel:'Weezer', meta:'Make Believe · 2005' },
+  { id:'PQHPYelqr0E',   title:'Pork and Beans',        channel:'Weezer', meta:'Red Album · 2008' },
+  { id:'efPWrIvzGgc',   title:'Feels Like Summer',     channel:'Weezer', meta:'Pacific Daydream · 2017' },
+  { id:'_9BGLtqqkVI',   title:'Hash Pipe',             channel:'Weezer', meta:'Green Album · 2001' },
+  { id:'hOIsYA1QDuk',   title:'Keep Fishin’',          channel:'Weezer', meta:'Maladroit · 2002' },
+];
 
-  function copyLink() {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-      showToast();
-    }).catch(() => {
-      // Fallback for browsers that block clipboard API
-      const ta = document.createElement("textarea");
-      ta.value = url;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      showToast();
-    });
+const FREE_VIDEO = { id:'okthJIVbi6g', title:'El Scorcho', channel:'Weezer', meta:'Pinkerton · 1996' };
+
+/** Point multiplier cap; costs below are for steps 1→2, 2→3, …, 9→10 */
+const MULT_MAX = 10;
+const MULT_STEP_COST = [35, 80, 150, 260, 400, 580, 800, 1100, 1500];
+
+const EXTRA_SHOP = [
+  { id:'feat_autoplay', name:'Instant Play', icon:'▶️', bg:'#0d1a2a', cost:40,
+    desc:'New videos start playing automatically — no click needed after load.',
+    battlePassClass: false },
+  { id:'feat_battlepass', name:'Weezer Battle Pass', icon:'🎫', bg:'#2a2210', cost:1000,
+    desc:'Unlock the full Up Next playlist: Buddy Holly, Say It Ain’t So, and more.',
+    battlePassClass: true },
+];
+
+// ─── Persistent state ─────────────────────────────────────────────────────────
+function loadState() { try { return JSON.parse(localStorage.getItem('yt_pts') || '{}'); } catch { return {}; } }
+function saveState()  {
+  localStorage.setItem('yt_pts', JSON.stringify({
+    totalPoints, owned:[...owned], activeId,
+    autoplayOwned, battlePassOwned,
+    pointMultiplier,
+  }));
+}
+
+const S      = loadState();
+let totalPoints = S.totalPoints || 0;
+let owned       = new Set(S.owned || []);
+let activeId    = S.activeId   || null;
+let autoplayOwned   = !!S.autoplayOwned;
+let battlePassOwned = !!S.battlePassOwned;
+let pointMultiplier = Math.min(MULT_MAX, Math.max(1, Number(S.pointMultiplier) || 1));
+
+function effectiveMultiplier() {
+  return Math.min(MULT_MAX, Math.max(1, pointMultiplier | 0));
+}
+function nextMultiplierStepCost() {
+  if (pointMultiplier >= MULT_MAX) return null;
+  return MULT_STEP_COST[pointMultiplier - 1];
+}
+
+function activeSecs() {
+  if (!activeId) return 45;
+  return UPGRADES.find(u => u.id === activeId)?.seconds ?? 45;
+}
+
+// ─── Watch tracking ───────────────────────────────────────────────────────────
+let sessionPts  = 0, watchedSecs = 0, tickSecs = 0;
+let watchTimer  = null, ytPlayer = null, hasStarted = false;
+const SKIP_THRESH = 0.8;
+
+function startTracking() {
+  if (watchTimer) return;
+  watchTimer = setInterval(() => { watchedSecs++; tickSecs++; updateHUD(); if (tickSecs >= activeSecs()) award(); }, 1000);
+}
+function stopTracking()  { clearInterval(watchTimer); watchTimer = null; }
+function resetSession()  { stopTracking(); watchedSecs = sessionPts = tickSecs = 0; hasStarted = false; updateHUD(); }
+
+/** @param {boolean} fromVideoComplete bonus when finishing a watch */
+function award(fromVideoComplete = false) {
+  const m = effectiveMultiplier();
+  totalPoints += m;
+  sessionPts += m;
+  tickSecs = 0;
+  let popTxt;
+  if (fromVideoComplete) {
+    popTxt = m > 1 ? `🎉 +${m}` : '🎉 +1';
+  } else {
+    popTxt = m > 1 ? `+${m} (${m}×)` : '+1';
   }
+  saveState(); spawnPop(popTxt); updateHUD(); renderShop();
+}
 
-  function showToast() {
-    const toast = document.getElementById("copy-toast");
-    toast.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove("show"), 2000);
+// ─── HUD ──────────────────────────────────────────────────────────────────────
+function updateHUD() {
+  const secs = activeSecs();
+  const m = effectiveMultiplier();
+  const mb = document.getElementById('mult-badge');
+  if (m > 1) {
+    mb.textContent = `${m}×`;
+    mb.removeAttribute('hidden');
+  } else {
+    mb.setAttribute('hidden', '');
   }
+  document.getElementById('total-points').innerHTML = `${totalPoints} <span>pts</span>`;
+  document.getElementById('session-points').textContent = `+${sessionPts}`;
+  document.getElementById('shop-balance').textContent   = totalPoints;
+  document.getElementById('progress-fill').style.width  = Math.min(tickSecs / secs * 100, 100) + '%';
+  const rem = secs - tickSecs;
+  document.getElementById('next-point-label').textContent = `Next point in ${rem}s`;
+  document.getElementById('timer-chip').textContent = `⏱ ${secs}s`;
+}
 
-  function toggleDesc() {
-    descExpanded = !descExpanded;
-    const text = document.getElementById("desc-text");
-    const toggle = document.getElementById("desc-toggle");
-    if (descExpanded) {
-      text.classList.remove("collapsed");
-      toggle.textContent = "Show less";
+function spawnPop(label) {
+  const r   = document.getElementById('points-hud').getBoundingClientRect();
+  const el  = document.createElement('div');
+  el.className   = 'point-pop';
+  el.textContent = label;
+  el.style.left  = (r.left + 36) + 'px';
+  el.style.top   = (r.top + window.scrollY - 4) + 'px';
+  document.body.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+}
+
+// ─── YouTube IFrame API ───────────────────────────────────────────────────────
+(function() { const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); })();
+
+function onYouTubeIframeAPIReady() {
+  ytPlayer = new YT.Player('player', {
+    videoId: FREE_VIDEO.id,
+    playerVars: { autoplay: autoplayOwned ? 1 : 0, rel:0, modestbranding:1 },
+    events: { onReady: onPlayerReady, onStateChange: onStateChange }
+  });
+}
+function onPlayerReady() {
+  const f = document.querySelector('#player iframe');
+  if (f) Object.assign(f.style, { width:'100%', height:'100%', border:'none', display:'block' });
+  if (autoplayOwned) {
+    try { ytPlayer.playVideo(); } catch (_) {}
+  }
+  updateHUD();
+}
+
+function tryAutoplayAfterLoad() {
+  if (!autoplayOwned || !ytPlayer) return;
+  setTimeout(() => { try { ytPlayer.playVideo(); } catch (_) {} }, 320);
+}
+function onStateChange(e) {
+  const P = YT.PlayerState;
+  if (e.data === P.PLAYING)  { hasStarted = true; startTracking(); }
+  if (e.data === P.PAUSED || e.data === P.BUFFERING) { stopTracking(); updateHUD(); }
+  if (e.data === P.ENDED) {
+    stopTracking();
+    const dur = ytPlayer.getDuration();
+    if (hasStarted && dur > 0 && watchedSecs / dur >= SKIP_THRESH) { award(true); }
+    resetSession();
+  }
+}
+
+// ─── Shop ─────────────────────────────────────────────────────────────────────
+function openShop()  { renderShop(); document.getElementById('shop-backdrop').classList.add('open'); }
+function closeShop() { document.getElementById('shop-backdrop').classList.remove('open'); }
+function backdropClose(e) { if (e.target.id === 'shop-backdrop') closeShop(); }
+
+function renderShop() {
+  document.getElementById('shop-balance').textContent = totalPoints;
+  const wrap = document.getElementById('shop-items');
+  wrap.innerHTML = '';
+
+  UPGRADES.forEach((u, i) => {
+    const isOwned   = owned.has(u.id);
+    const isActive  = u.id === activeId;
+    const prereqOk  = !u.requires || owned.has(u.requires);
+    const canAfford = totalPoints >= u.cost;
+
+    const div = document.createElement('div');
+    div.className = 'shop-item' + (!isOwned && prereqOk && canAfford ? ' can-buy' : '');
+    if (!isOwned && prereqOk && canAfford) div.onclick = () => purchase(u.id);
+
+    let rightHTML;
+    if (isOwned) {
+      rightHTML = `<span class="buy-btn tag-owned">✓ Owned</span>`;
+    } else if (!prereqOk) {
+      rightHTML = `<button class="buy-btn" disabled>🔒 ${UPGRADES[i-1]?.name}</button>`;
     } else {
-      text.classList.add("collapsed");
-      toggle.textContent = "...more";
+      rightHTML = `<button class="buy-btn" ${canAfford ? '' : 'disabled'}>${canAfford ? `Buy · ${u.cost} pts` : `Need ${u.cost - totalPoints} more`}</button>`;
     }
+
+    div.innerHTML = `
+      <div class="shop-item-icon" style="background:${u.bg}">${u.icon}</div>
+      <div class="shop-item-body">
+        <div class="shop-item-name">${u.name}${isActive ? ' <span class="active-badge">● ACTIVE</span>' : ''}</div>
+        <div class="shop-item-desc">${u.desc}</div>
+        ${isOwned ? `<div class="shop-item-unlocked">⚡ 1 pt every ${u.seconds}s</div>` : ''}
+        ${!prereqOk ? `<div class="shop-item-locked">🔒 Unlock "${UPGRADES[i-1]?.name}" first</div>` : ''}
+      </div>
+      <div class="shop-item-right">${rightHTML}</div>`;
+
+    wrap.appendChild(div);
+    if (i < UPGRADES.length - 1) { const d = document.createElement('div'); d.className = 'shop-divider'; wrap.appendChild(d); }
+  });
+
+  const mwrap = document.getElementById('shop-multiplier');
+  mwrap.innerHTML = '';
+  const mCur = effectiveMultiplier();
+  if (mCur >= MULT_MAX) {
+    const div = document.createElement('div');
+    div.className = 'shop-item';
+    div.innerHTML = `
+      <div class="shop-item-icon" style="background:#241828">10×</div>
+      <div class="shop-item-body">
+        <div class="shop-item-name">Point multiplier maxed</div>
+        <div class="shop-item-desc">You earn <strong>10 points</strong> every tick and on full video bonuses.</div>
+        <div class="shop-item-unlocked">🔥 ${MULT_MAX}× active</div>
+      </div>
+      <div class="shop-item-right"><span class="buy-btn tag-owned">Max</span></div>`;
+    mwrap.appendChild(div);
+  } else {
+    const cost = nextMultiplierStepCost();
+    const nextM = mCur + 1;
+    const canAfford = totalPoints >= cost;
+    const div = document.createElement('div');
+    div.className = 'shop-item' + (canAfford ? ' can-buy' : '');
+    if (canAfford) div.onclick = purchaseMultiplier;
+    div.innerHTML = `
+      <div class="shop-item-icon" style="background:#2a1420">✨</div>
+      <div class="shop-item-body">
+        <div class="shop-item-name">Upgrade to ${nextM}×</div>
+        <div class="shop-item-desc">Each timer tick and completion bonus grants <strong>${nextM} points</strong> instead of ${mCur}. Next: <strong>${nextM}×</strong> (max ${MULT_MAX}×).</div>
+        <div class="shop-item-unlocked" style="margin-top:4px">Now: ${mCur}× earnings</div>
+      </div>
+      <div class="shop-item-right">
+        <button class="buy-btn" ${canAfford ? '' : 'disabled'}>${canAfford ? `Buy · ${cost} pts` : `Need ${cost - totalPoints} more`}</button>
+      </div>`;
+    mwrap.appendChild(div);
   }
 
-  function renderComments() {
-    const list = document.getElementById("comments-list");
-    list.innerHTML = "";
-    comments.forEach(c => {
-      const el = document.createElement("div");
-      el.className = "comment";
-      el.innerHTML = `
-        <div class="comment-avatar" style="background:${c.color}; width:36px; height:36px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff;">${c.initial}</div>
-        <div class="comment-body">
-          <div class="comment-author">@${c.name} <span>${c.time}</span></div>
-          <div class="comment-text">${c.text}</div>
-          <div class="comment-actions">
-            <span class="comment-like">👍 ${c.likes}</span>
-            <span class="comment-like">👎</span>
-            <button class="reply-btn">Reply</button>
-          </div>
-        </div>
-      `;
-      list.appendChild(el);
-    });
+  const xwrap = document.getElementById('shop-extras');
+  xwrap.innerHTML = '';
+  EXTRA_SHOP.forEach((ex, xi) => {
+    const isOwned = ex.id === 'feat_autoplay' ? autoplayOwned : battlePassOwned;
+    const canAfford = totalPoints >= ex.cost;
+    const div = document.createElement('div');
+    div.className = 'shop-item' + (!isOwned && canAfford ? ' can-buy' : '');
+    if (!isOwned && canAfford) div.onclick = () => purchaseExtra(ex.id);
+
+    const btnClass = ex.battlePassClass ? 'buy-btn battle-pass' : 'buy-btn';
+    let rightHTML;
+    if (isOwned) {
+      rightHTML = `<span class="buy-btn tag-owned">✓ Owned</span>`;
+    } else {
+      rightHTML = `<button class="${btnClass}" ${canAfford ? '' : 'disabled'}>${canAfford ? `Buy · ${ex.cost} pts` : `Need ${ex.cost - totalPoints} more`}</button>`;
+    }
+
+    div.innerHTML = `
+      <div class="shop-item-icon" style="background:${ex.bg}">${ex.icon}</div>
+      <div class="shop-item-body">
+        <div class="shop-item-name">${ex.name}</div>
+        <div class="shop-item-desc">${ex.desc}</div>
+        ${isOwned && ex.id === 'feat_battlepass' ? `<div class="shop-item-unlocked">Playlist unlocked in Up Next</div>` : ''}
+        ${isOwned && ex.id === 'feat_autoplay' ? `<div class="shop-item-unlocked">Autoplay on for every video</div>` : ''}
+      </div>
+      <div class="shop-item-right">${rightHTML}</div>`;
+    xwrap.appendChild(div);
+    if (xi < EXTRA_SHOP.length - 1) { const d = document.createElement('div'); d.className = 'shop-divider'; xwrap.appendChild(d); }
+  });
+}
+
+function purchaseMultiplier() {
+  if (pointMultiplier >= MULT_MAX) return;
+  const cost = nextMultiplierStepCost();
+  if (cost == null || totalPoints < cost) return;
+  totalPoints -= cost;
+  pointMultiplier++;
+  saveState();
+  spawnPop('✨');
+  updateHUD();
+  renderShop();
+  const hud = document.getElementById('points-hud');
+  hud.classList.remove('hud-flash'); void hud.offsetWidth; hud.classList.add('hud-flash');
+}
+
+function purchaseExtra(id) {
+  const ex = EXTRA_SHOP.find(e => e.id === id);
+  if (!ex) return;
+  if (id === 'feat_autoplay' && autoplayOwned) return;
+  if (id === 'feat_battlepass' && battlePassOwned) return;
+  if (totalPoints < ex.cost) return;
+
+  totalPoints -= ex.cost;
+  if (id === 'feat_autoplay') {
+    autoplayOwned = true;
+    try { ytPlayer?.playVideo(); } catch (_) {}
   }
-
-  let currentId = "okthJIVbi6g";
-
-  function renderFeed() {
-    const feed = document.getElementById("feed");
-    feed.innerHTML = "";
-    videos.forEach(v => {
-      const card = document.createElement("div");
-      card.className = "card" + (v.id === currentId ? " active" : "");
-      card.innerHTML = `
-        ${v.id === currentId ? '<div class="active-bar"></div>' : ''}
-        <div class="thumb-wrap">
-          <img src="https://img.youtube.com/vi/${v.id}/mqdefault.jpg" alt="${v.title}"
-               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-          <div class="thumb-fallback" style="display:none">${v.emoji || ''}</div>
-          <span class="play-badge">${v.id === currentId ? "▶ NOW" : "▶"}</span>
-        </div>
-        <div class="card-info">
-          <div class="card-title">${v.title}</div>
-          <div class="card-channel">${v.channel}</div>
-          <div class="card-meta">${v.meta}</div>
-        </div>
-      `;
-      if (v.id !== currentId) {
-        card.onclick = () => changeVideo(v);
-      }
-      feed.appendChild(card);
-    });
-  }
-
-  function changeVideo(v) {
-    currentId = v.id;
-    document.getElementById("main-title").textContent = v.title;
-    const loader = document.getElementById("loader");
-    loader.classList.add("show");
+  if (id === 'feat_battlepass') {
+    battlePassOwned = true;
+    const prevId = currentId;
+    videos = buildVideoList();
+    let idx = videos.findIndex(x => x.id === prevId);
+    currentFeedIndex = idx >= 0 ? idx : 0;
+    currentId = videos[currentFeedIndex].id;
     renderFeed();
-    setTimeout(() => {
-      document.getElementById("player").src =
-        `https://www.youtube.com/embed/${v.id}?autoplay=1&rel=0&modestbranding=1`;
-      setTimeout(() => loader.classList.remove("show"), 600);
-    }, 400);
   }
+  saveState();
+  spawnPop(id === 'feat_battlepass' ? '🎫' : '▶️');
+  updateHUD();
+  renderShop();
 
-  renderFeed();
-  renderComments();
+  const hud = document.getElementById('points-hud');
+  hud.classList.remove('hud-flash'); void hud.offsetWidth; hud.classList.add('hud-flash');
+}
+
+function purchase(id) {
+  const u = UPGRADES.find(u => u.id === id);
+  if (!u || owned.has(id) || totalPoints < u.cost) return;
+  if (u.requires && !owned.has(u.requires)) return;
+
+  totalPoints -= u.cost;
+  owned.add(id);
+  activeId = id;
+  tickSecs = 0; // reset progress toward next point
+  saveState(); spawnPop('🛒'); updateHUD(); renderShop();
+
+  // Flash HUD border
+  const hud = document.getElementById('points-hud');
+  hud.classList.remove('hud-flash'); void hud.offsetWidth; hud.classList.add('hud-flash');
+}
+
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
+function buildVideoList() {
+  const base = [FREE_VIDEO, ...PASS_CATALOG];
+  if (battlePassOwned) {
+    const out = [];
+    for (let i = 0; i < 21; i++) out.push(base[i % base.length]);
+    return out;
+  }
+  return Array.from({ length: 21 }, () => ({ ...FREE_VIDEO }));
+}
+
+let videos = buildVideoList();
+let currentFeedIndex = 0;
+let currentId = videos[0].id;
+
+function changeVideo(index) {
+  const v = videos[index];
+  if (!ytPlayer || !v) return;
+  resetSession();
+  currentFeedIndex = index;
+  currentId = v.id;
+  document.getElementById('main-title').textContent = v.title;
+  const loader = document.getElementById('loader');
+  loader.classList.add('show'); renderFeed();
+  setTimeout(() => {
+    ytPlayer.loadVideoById(v.id);
+    tryAutoplayAfterLoad();
+    setTimeout(() => loader.classList.remove('show'), 600);
+  }, 400);
+}
+
+function renderFeed() {
+  const feed = document.getElementById('feed'); feed.innerHTML = '';
+  videos.forEach((v, i) => {
+    const c = document.createElement('div');
+    const isCurrent = i === currentFeedIndex;
+    c.className = 'card' + (isCurrent ? ' active' : '');
+    c.innerHTML = `
+      ${isCurrent ? '<div class="active-bar"></div>' : ''}
+      <div class="thumb-wrap">
+        <img src="https://img.youtube.com/vi/${v.id}/mqdefault.jpg" alt="${v.title}"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="thumb-fallback" style="display:none"></div>
+        <span class="play-badge">${isCurrent ? '▶ NOW' : '▶'}</span>
+      </div>
+      <div class="card-info">
+        <div class="card-title">${v.title}</div>
+        <div class="card-channel">${v.channel}</div>
+        <div class="card-meta">${v.meta}</div>
+      </div>`;
+    if (!isCurrent) c.onclick = () => changeVideo(i);
+    feed.appendChild(c);
+  });
+}
+
+// ─── Comments ─────────────────────────────────────────────────────────────────
+const COMMENTS = [
+  { name:'rivers_fan96',   color:'#5b4fcf', initial:'R', time:'3 years ago',   likes:'12K',   text:'this song coming on shuffle at 2am hits different every single time' },
+  { name:'shane_m',        color:'#cc0000', initial:'S', time:'1 year ago',    likes:'82.4K', text:'I think the "El Scorcho" lyrics are the first explicit Madama Butterfly reference?' },
+  { name:'weezerweekly',   color:'#1a73e8', initial:'W', time:'5 years ago',   likes:'6.1K',  text:'The fact that this was considered a flop when it came out makes me lose all faith in contemporary music criticism' },
+  { name:'guitarjunkie88', color:'#0f9d58', initial:'G', time:'2 years ago',   likes:'3.2K',  text:"Spike Jonze directed this and it shows. every frame looks like a memory you can't quite place" },
+  { name:'melonhead44',    color:'#f4a300', initial:'M', time:'8 months ago',  likes:'2.9K',  text:'i played this at my wedding. my wife cried. i cried. the priest cried. 10/10 would recommend' },
+  { name:'quietstorm_77',  color:'#9c27b0', initial:'Q', time:'4 years ago',   likes:'1.7K',  text:'love it!' },
+  { name:'degreelessdan',  color:'#e91e63', initial:'D', time:'11 months ago', likes:'987',   text:"came here from a tiktok that used 0.3 seconds of this song and now I've listened to pinkerton front to back four times today" },
+  { name:'karlophone',     color:'green',   initial:'K', time:'6 years ago',   likes:'75.4K', text:'🙂' },
+];
+
+function renderComments() {
+  const list = document.getElementById('comments-list'); list.innerHTML = '';
+  COMMENTS.forEach(c => {
+    const el = document.createElement('div'); el.className = 'comment';
+    el.innerHTML = `
+      <div class="comment-avatar" style="background:${c.color};width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">${c.initial}</div>
+      <div class="comment-body">
+        <div class="comment-author">@${c.name} <span>${c.time}</span></div>
+        <div class="comment-text">${c.text}</div>
+        <div class="comment-actions">
+          <span class="comment-like">👍 ${c.likes}</span>
+          <span class="comment-like">👎</span>
+          <button class="reply-btn">Reply</button>
+        </div>
+      </div>`;
+    list.appendChild(el);
+  });
+}
+
+// ─── Misc UI ──────────────────────────────────────────────────────────────────
+let descExpanded = false, toastTimer = null;
+function copyLink() {
+  navigator.clipboard.writeText(window.location.href).then(showToast).catch(() => {
+    const ta = document.createElement('textarea'); ta.value = window.location.href;
+    ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast();
+  });
+}
+function showToast() {
+  const t = document.getElementById('copy-toast'); t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+function toggleDesc() {
+  descExpanded = !descExpanded;
+  document.getElementById('desc-text').classList.toggle('collapsed', !descExpanded);
+  document.getElementById('desc-toggle').textContent = descExpanded ? 'Show less' : '...more';
+}
+
+// ─── Dev admin ────────────────────────────────────────────────────────────────
+function adminGrantPts() {
+  const raw = document.getElementById('admin-amount').value;
+  const n = Math.max(1, parseInt(raw, 10) || 100);
+  totalPoints += n;
+  saveState();
+  spawnPop('+' + n + ' (dev)');
+  updateHUD();
+  renderShop();
+}
+
+function adminIsTypingTarget(el) {
+  if (!el || el === document.body) return false;
+  const tag = el.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+  if (el.isContentEditable) return true;
+  return adminIsTypingTarget(el.parentElement);
+}
+
+function toggleAdminPanel() {
+  const p = document.getElementById('admin-panel');
+  const open = p.classList.toggle('open');
+  p.setAttribute('aria-hidden', open ? 'false' : 'true');
+}
+
+if (ADMIN_MODE) {
+  document.getElementById('admin-grant-once').addEventListener('click', adminGrantPts);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '`' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      toggleAdminPanel();
+      return;
+    }
+    if (e.key !== 'p' && e.key !== 'P') return;
+    if (adminIsTypingTarget(e.target)) return;
+    e.preventDefault();
+    adminGrantPts();
+  });
+} else {
+  document.getElementById('admin-panel').remove();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+renderFeed(); renderComments(); updateHUD();
 </script>
-
 </body>
 </html>
