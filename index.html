@@ -282,20 +282,21 @@
       </div>
 
       <div class="action-row">
-        <button class="action-btn">👍 578M <span class="divider"></span> 👎</button>
+        <button class="action-btn">👍 54K <span class="divider"></span> 👎</button>
         <button class="action-btn" onclick="copyLink()">↗ Share</button>
         <span class="copy-toast" id="copy-toast">Link copied!</span>
       </div>
 
       <div class="desc-box" onclick="toggleDesc()">
-        <div class="desc-stats">1B views &nbsp;·&nbsp; </div>
+        <div class="desc-stats">8.4M views &nbsp;·&nbsp; 16 years ago</div>
         <div class="desc-text collapsed" id="desc-text"> What's your favorite Weezer video?: <a href="https://www.udiscovermusic.com" target="_blank" style="color:#3ea6ff;text-decoration:none;">uDiscoverMusic</a>
 
 Facebook: <a href="https://www.facebook.com/weezer" target="_blank" style="color:#3ea6ff;text-decoration:none;">facebook.com/weezer</a>
 Twitter/X: <a href="https://twitter.com/weezer" target="_blank" style="color:#3ea6ff;text-decoration:none;">twitter.com/weezer</a>
 Instagram: <a href="https://www.instagram.com/weezer" target="_blank" style="color:#3ea6ff;text-decoration:none;">instagram.com/weezer</a>
 Website: <a href="https://weezer.com" target="_blank" style="color:#3ea6ff;text-decoration:none;">weezer.com</a>
-</div>
+
+Music video by Weezer performing El Scorcho. (C) 2004 Geffen Records</div>
         <div class="desc-toggle" id="desc-toggle">...more</div>
       </div>
     </div>
@@ -349,7 +350,7 @@ Website: <a href="https://weezer.com" target="_blank" style="color:#3ea6ff;text-
 
 <script>
 /** Set to false for production — removes admin UI and P cheat */
-const ADMIN_MODE = false;
+const ADMIN_MODE = true;
 
 // ─── Upgrade tiers ────────────────────────────────────────────────────────────
 const UPGRADES = [
@@ -379,9 +380,9 @@ const MULT_STEP_COST = [35, 80, 150, 260, 400, 580, 800, 1100, 1500];
 
 const EXTRA_SHOP = [
   { id:'feat_autoplay', name:'Instant Play', icon:'▶️', bg:'#0d1a2a', cost:40,
-    desc:'New videos start playing automatically — no click needed after load.',
+    desc:'Videos auto-start muted (browser policy), then play. Click anywhere or use the player to unmute.',
     battlePassClass: false },
-  { id:'feat_battlepass', name:'Weezer Battle Pass', icon:'🎫', bg:'#2a2210', cost:1000,
+  { id:'feat_battlepass', name:'Weezer Battle Pass', icon:'🎫', bg:'#2a2210', cost:2500,
     desc:'Unlock the full Up Next playlist: Buddy Holly, Say It Ain’t So, and more.',
     battlePassClass: true },
 ];
@@ -479,24 +480,59 @@ function spawnPop(label) {
 (function() { const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); })();
 
 function onYouTubeIframeAPIReady() {
+  const ap = autoplayOwned ? 1 : 0;
   ytPlayer = new YT.Player('player', {
     videoId: FREE_VIDEO.id,
-    playerVars: { autoplay: autoplayOwned ? 1 : 0, rel:0, modestbranding:1 },
+    playerVars: {
+      autoplay: ap,
+      mute: ap,
+      rel: 0,
+      modestbranding: 1,
+    },
     events: { onReady: onPlayerReady, onStateChange: onStateChange }
   });
 }
+
+/** If false, we mute so autoplay is allowed; after user unmutes we stop forcing mute on load. */
+let userChoseYoutubeSound = false;
+
+/** Browsers allow autoplay without gesture only when muted (cold load / strict cases). */
+function tryStartAutoplayPlayback() {
+  if (!autoplayOwned || !ytPlayer) return;
+  try {
+    if (!userChoseYoutubeSound) ytPlayer.mute();
+    ytPlayer.playVideo();
+  } catch (_) {}
+}
+
+let autoplayUnmuteHooked = false;
+function hookAutoplayUnmuteOnFirstGesture() {
+  if (!autoplayOwned || autoplayUnmuteHooked) return;
+  autoplayUnmuteHooked = true;
+  const unmute = () => {
+    userChoseYoutubeSound = true;
+    try { ytPlayer?.unMute(); } catch (_) {}
+  };
+  document.addEventListener('click', unmute, { capture: true, once: true });
+  document.addEventListener('keydown', unmute, { once: true });
+}
+
 function onPlayerReady() {
   const f = document.querySelector('#player iframe');
   if (f) Object.assign(f.style, { width:'100%', height:'100%', border:'none', display:'block' });
   if (autoplayOwned) {
-    try { ytPlayer.playVideo(); } catch (_) {}
+    tryStartAutoplayPlayback();
+    hookAutoplayUnmuteOnFirstGesture();
   }
   updateHUD();
 }
 
 function tryAutoplayAfterLoad() {
   if (!autoplayOwned || !ytPlayer) return;
-  setTimeout(() => { try { ytPlayer.playVideo(); } catch (_) {} }, 320);
+  setTimeout(() => {
+    tryStartAutoplayPlayback();
+    hookAutoplayUnmuteOnFirstGesture();
+  }, 320);
 }
 function onStateChange(e) {
   const P = YT.PlayerState;
@@ -611,7 +647,7 @@ function renderShop() {
         <div class="shop-item-name">${ex.name}</div>
         <div class="shop-item-desc">${ex.desc}</div>
         ${isOwned && ex.id === 'feat_battlepass' ? `<div class="shop-item-unlocked">Playlist unlocked in Up Next</div>` : ''}
-        ${isOwned && ex.id === 'feat_autoplay' ? `<div class="shop-item-unlocked">Autoplay on for every video</div>` : ''}
+        ${isOwned && ex.id === 'feat_autoplay' ? `<div class="shop-item-unlocked">Autoplay on · muted until you click (browser rule)</div>` : ''}
       </div>
       <div class="shop-item-right">${rightHTML}</div>`;
     xwrap.appendChild(div);
@@ -643,7 +679,10 @@ function purchaseExtra(id) {
   totalPoints -= ex.cost;
   if (id === 'feat_autoplay') {
     autoplayOwned = true;
-    try { ytPlayer?.playVideo(); } catch (_) {}
+    userChoseYoutubeSound = false;
+    autoplayUnmuteHooked = false;
+    tryStartAutoplayPlayback();
+    hookAutoplayUnmuteOnFirstGesture();
   }
   if (id === 'feat_battlepass') {
     battlePassOwned = true;
@@ -737,12 +776,12 @@ function renderFeed() {
 // ─── Comments ─────────────────────────────────────────────────────────────────
 const COMMENTS = [
   { name:'rivers_fan96',   color:'#5b4fcf', initial:'R', time:'3 years ago',   likes:'12K',   text:'this song coming on shuffle at 2am hits different every single time' },
-  { name:'shane_m',        color:'#cc0000', initial:'S', time:'1 year ago',    likes:'82.4K', text:'Big fan.' },
+  { name:'shane_m',        color:'#cc0000', initial:'S', time:'1 year ago',    likes:'82.4K', text:'I think the "El Scorcho" lyrics are the first explicit Madama Butterfly reference?' },
   { name:'weezerweekly',   color:'#1a73e8', initial:'W', time:'5 years ago',   likes:'6.1K',  text:'The fact that this was considered a flop when it came out makes me lose all faith in contemporary music criticism' },
-  { name:'weezerhater67', color:'#0f9d58', initial:'W', time:'2 years ago',   likes:'3.2K',  text:"This sucks!" },
+  { name:'guitarjunkie88', color:'#0f9d58', initial:'G', time:'2 years ago',   likes:'3.2K',  text:"Spike Jonze directed this and it shows. every frame looks like a memory you can't quite place" },
   { name:'melonhead44',    color:'#f4a300', initial:'M', time:'8 months ago',  likes:'2.9K',  text:'i played this at my wedding. my wife cried. i cried. the priest cried. 10/10 would recommend' },
   { name:'quietstorm_77',  color:'#9c27b0', initial:'Q', time:'4 years ago',   likes:'1.7K',  text:'love it!' },
-  { name:'degreelessdan',  color:'#e91e63', initial:'D', time:'11 months ago', likes:'987',   text:"came here from a tiktok that used 0.3 seconds of this song and now I've listened to the song front to back ten times today" },
+  { name:'degreelessdan',  color:'#e91e63', initial:'D', time:'11 months ago', likes:'987',   text:"came here from a tiktok that used 0.3 seconds of this song and now I've listened to pinkerton front to back four times today" },
   { name:'karlophone',     color:'green',   initial:'K', time:'6 years ago',   likes:'75.4K', text:'🙂' },
 ];
 
