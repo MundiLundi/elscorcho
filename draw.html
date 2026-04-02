@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Drawing Program</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            background-color: #2c3e50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .canvas-container {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-left: 10vw;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #drawCanvas {
+            display: block;
+            background-color: #ffffff;
+            cursor: crosshair;
+        }
+
+        #imageCanvas {
+            display: block;
+            background-color: #ffffff;
+            filter: blur(15px);
+            transition: filter 0.3s ease;
+        }
+
+        #imageCanvas.unblurred {
+            filter: none;
+        }
+
+        .show-image-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            z-index: 10;
+            transition: background-color 0.3s;
+        }
+
+        .show-image-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .show-image-btn.hidden {
+            display: none;
+        }
+
+        .toolbar {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .toolbar label {
+            color: #ecf0f1;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+
+        .toolbar input[type="color"] {
+            width: 50px;
+            height: 30px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .toolbar input[type="range"] {
+            width: 100px;
+            cursor: pointer;
+        }
+
+        .toolbar button {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .toolbar button:hover {
+            background-color: #2980b9;
+        }
+
+        .toolbar button.danger {
+            background-color: #e74c3c;
+        }
+
+        .toolbar button.danger:hover {
+            background-color: #c0392b;
+        }
+
+        .toolbar button:disabled {
+            background-color: #7f8c8d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .brush-size-display {
+            color: #ecf0f1;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="canvas-container">
+            <div class="canvas-wrapper">
+                <canvas id="drawCanvas" width="500" height="500"></canvas>
+            </div>
+            <div class="canvas-wrapper">
+                <canvas id="imageCanvas" width="500" height="500"></canvas>
+                <button class="show-image-btn" id="showImageBtn">Show Image</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <label for="colorPicker">Brush Color</label>
+        <input type="color" id="colorPicker" value="#000000">
+
+        <label for="brushSize">Brush Size</label>
+        <input type="range" id="brushSize" min="1" max="50" value="3">
+        <span class="brush-size-display" id="brushSizeDisplay">3px</span>
+
+        <button id="undoBtn">Undo (Ctrl+Z)</button>
+        <button id="redoBtn">Redo (Alt+Z)</button>
+        <button id="clearBtn" class="danger">Clear Canvas</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        const imageCanvas = document.getElementById('imageCanvas');
+        const imageCtx = imageCanvas.getContext('2d');
+        const colorPicker = document.getElementById('colorPicker');
+        const brushSize = document.getElementById('brushSize');
+        const brushSizeDisplay = document.getElementById('brushSizeDisplay');
+        const clearBtn = document.getElementById('clearBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const showImageBtn = document.getElementById('showImageBtn');
+
+        // Show image button functionality
+        showImageBtn.addEventListener('click', () => {
+            imageCanvas.classList.add('unblurred');
+            showImageBtn.classList.add('hidden');
+        });
+
+        // List of images to randomly choose from
+        const albumImages = [
+            'Blue.jpg',
+            'Pinkerton.jpg',
+            'Green.jpg',
+            'Maladroit.jpg',
+            'MakeBelieve.jpg',
+            'Red.jpg',
+            'Raditude.jpg',
+            'Hurley.jpg',
+            'EWBAITE.jpg',
+            'White.jpg',
+            'PacificDaydream.jpg',
+            'Teal.jpg',
+            'Black.jpg',
+            'OKHuman.jpg',
+            'VanWeezer.jpg'
+        ];
+
+        // Load a random image on page load
+        function loadRandomImage() {
+            const randomIndex = Math.floor(Math.random() * albumImages.length);
+            const selectedImage = albumImages[randomIndex];
+
+            const img = new Image();
+            img.onload = () => {
+                // Draw image to fill the canvas while maintaining aspect ratio
+                const canvasWidth = imageCanvas.width;
+                const canvasHeight = imageCanvas.height;
+
+                // Calculate scaling to cover the canvas
+                const imgRatio = img.width / img.height;
+                const canvasRatio = canvasWidth / canvasHeight;
+
+                let drawWidth, drawHeight, drawX, drawY;
+
+                if (imgRatio > canvasRatio) {
+                    drawHeight = canvasHeight;
+                    drawWidth = img.width * (canvasHeight / img.height);
+                    drawX = (canvasWidth - drawWidth) / 2;
+                    drawY = 0;
+                } else {
+                    drawWidth = canvasWidth;
+                    drawHeight = img.height * (canvasWidth / img.width);
+                    drawX = 0;
+                    drawY = (canvasHeight - drawHeight) / 2;
+                }
+
+                // Fill with white first
+                imageCtx.fillStyle = '#ffffff';
+                imageCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+                // Draw the image
+                imageCtx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+            };
+            img.onerror = () => {
+                // If image fails to load, show placeholder text
+                imageCtx.fillStyle = '#ffffff';
+                imageCtx.fillRect(0, 0, imageCanvas.width, imageCanvas.height);
+                imageCtx.fillStyle = '#95a5a6';
+                imageCtx.font = '20px Arial';
+                imageCtx.textAlign = 'center';
+                imageCtx.fillText('Image not found: ' + selectedImage, imageCanvas.width / 2, imageCanvas.height / 2);
+            };
+            img.src = selectedImage;
+        }
+
+        loadRandomImage();
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        // Undo/Redo history
+        let history = [];
+        let historyIndex = -1;
+        const maxHistory = 50;
+
+        // Initialize canvas with white background
+        function initCanvas() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Save initial blank state to history
+            history = [canvas.toDataURL()];
+            historyIndex = 0;
+            updateButtonStates();
+        }
+
+        initCanvas();
+
+        // Save current canvas state to history
+        function saveToHistory() {
+            // Remove any future states if we're not at the end
+            if (historyIndex < history.length - 1) {
+                history = history.slice(0, historyIndex + 1);
+            }
+
+            // Add current state
+            history.push(canvas.toDataURL());
+            historyIndex++;
+
+            // Limit history size
+            if (history.length > maxHistory) {
+                history.shift();
+                historyIndex--;
+            }
+
+            updateButtonStates();
+        }
+
+        // Restore canvas state from history
+        function restoreFromHistory(index) {
+            const img = new Image();
+            img.src = history[index];
+            img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                historyIndex = index;
+                updateButtonStates();
+            };
+        }
+
+        // Undo function
+        function undo() {
+            if (historyIndex > 0) {
+                restoreFromHistory(historyIndex - 1);
+            }
+        }
+
+        // Redo function
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                restoreFromHistory(historyIndex + 1);
+            }
+        }
+
+        // Update button disabled states
+        function updateButtonStates() {
+            undoBtn.disabled = historyIndex <= 0;
+            redoBtn.disabled = historyIndex >= history.length - 1;
+        }
+
+        // Drawing functions
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = colorPicker.value;
+            ctx.lineWidth = brushSize.value;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            lastX = x;
+            lastY = y;
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                saveToHistory();
+            }
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events for mobile support
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        canvas.addEventListener('touchend', () => {
+            const mouseEvent = new MouseEvent('mouseup', {});
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Z for undo
+            if (e.ctrlKey && e.key === 'z' && !e.altKey) {
+                e.preventDefault();
+                undo();
+            }
+            // Alt+Z for redo (or Ctrl+Shift+Z as alternative)
+            if ((e.altKey && e.key === 'z') || (e.ctrlKey && e.shiftKey && e.key === 'z') || (e.ctrlKey && e.key === 'y')) {
+                e.preventDefault();
+                redo();
+            }
+        });
+
+        // Brush size display update
+        brushSize.addEventListener('input', () => {
+            brushSizeDisplay.textContent = brushSize.value + 'px';
+        });
+
+        // Undo button
+        undoBtn.addEventListener('click', undo);
+
+        // Redo button
+        redoBtn.addEventListener('click', redo);
+
+        // Clear canvas button
+        clearBtn.addEventListener('click', () => {
+            initCanvas();
+        });
+    </script>
+</body>
+</html>
