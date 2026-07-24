@@ -1,1 +1,472 @@
+```css
+/* =========================================================
+   EL SCORCHO
+   comments.css
+   Pinkerton scrapbook comments section
+========================================================= */
+
+/* =========================================================
+   COMMENTS CONTAINER
+========================================================= */
+
+.comments{
+    position:relative;
+
+    margin-top:35px;
+
+    padding:32px;
+
+    background:var(--paper);
+
+    box-shadow:
+        0 15px 35px rgba(0,0,0,.22);
+
+    overflow:hidden;
+}
+
+.comments h2{
+
+    font-family:"Caveat",cursive;
+
+    font-size:46px;
+
+    margin-bottom:28px;
+
+    transform:rotate(-2deg);
+
+    color:#2b2b2b;
+
+}
+
+.comments h2::after{
+
+    content:"";
+
+    display:block;
+
+    width:170px;
+
+    height:6px;
+
+    margin-top:5px;
+
+    background:var(--pink);
+
+}
+
+/* =========================================================
+   COMMENT INPUT
+========================================================= */
+
+.comment-box{
+
+    display:flex;
+
+    gap:15px;
+
+    margin-bottom:35px;
+
+}
+
+.comment-avatar{
+
+    width:52px;
+    height:52px;
+
+    border-radius:50%;
+
+    background:#ddd;
+
+    flex-shrink:0;
+
+}
+
+.comment-form{
+
+    flex:1;
+
+}
+
+.comment-form textarea{
+
+    width:100%;
+
+    min-height:90px;
+
+    padding:14px;
+
+    resize:vertical;
+
+    border:1px solid #d8d8d8;
+
+    border-radius:12px;
+
+    background:white;
+
+    font-family:"Space Mono",monospace;
+
+    font-size:12px;
+
+}
+
+.comment-actions{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    margin-top:12px;
+
+}
+
+.comment-submit{
+
+    padding:12px 20px;
+
+    background:var(--pink);
+
+    color:white;
+
+    border:none;
+
+    border-radius:6px;
+
+    font-family:"Space Mono",monospace;
+
+    text-transform:uppercase;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.comment-submit:hover{
+
+    background:var(--pink-dark);
+
+    transform:translateY(-2px);
+
+}
+
+/* =========================================================
+   COMMENT LIST
+========================================================= */
+
+.comment{
+
+    display:flex;
+
+    gap:15px;
+
+    margin-bottom:28px;
+
+    padding-bottom:28px;
+
+    border-bottom:1px solid rgba(0,0,0,.08);
+
+}
+
+.comment:last-child{
+
+    border:none;
+
+    margin-bottom:0;
+
+}
+
+.comment img{
+
+    width:48px;
+    height:48px;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+}
+
+.comment-content{
+
+    flex:1;
+
+}
+
+.comment-author{
+
+    font-family:"Oswald",sans-serif;
+
+    font-size:18px;
+
+    font-weight:700;
+
+}
+
+.comment-date{
+
+    color:#777;
+
+    font-family:"Space Mono",monospace;
+
+    font-size:11px;
+
+    margin-bottom:8px;
+
+}
+
+.comment-text{
+
+    line-height:1.6;
+
+    font-size:15px;
+
+}
+
+/* =========================================================
+   LIKE BAR
+========================================================= */
+
+.comment-footer{
+
+    display:flex;
+
+    gap:18px;
+
+    margin-top:12px;
+
+    font-size:13px;
+
+    color:#666;
+
+}
+
+.comment-like,
+.comment-reply{
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.comment-like:hover,
+.comment-reply:hover{
+
+    color:var(--pink-dark);
+
+}
+
+/* =========================================================
+   PINNED COMMENT
+========================================================= */
+
+.comment.pinned{
+
+    background:#fff7c8;
+
+    padding:18px;
+
+    border-radius:10px;
+
+    border:none;
+
+    box-shadow:0 6px 16px rgba(0,0,0,.12);
+
+    position:relative;
+
+}
+
+.comment.pinned::before{
+
+    content:"📌 Pinned";
+
+    position:absolute;
+
+    top:-12px;
+
+    left:20px;
+
+    background:#ffe98f;
+
+    padding:4px 10px;
+
+    font-family:"Caveat",cursive;
+
+    font-size:20px;
+
+    transform:rotate(-2deg);
+
+}
+
+/* =========================================================
+   CREATOR HEART
+========================================================= */
+
+.creator-heart{
+
+    color:#ff5f8f;
+
+    margin-left:6px;
+
+}
+
+/* =========================================================
+   VERIFIED BADGE
+========================================================= */
+
+.verified{
+
+    color:#3ea6ff;
+
+    margin-left:4px;
+
+}
+
+/* =========================================================
+   COMMENT SCORE
+========================================================= */
+
+.comment-score{
+
+    color:#666;
+
+    font-family:"Space Mono",monospace;
+
+    font-size:11px;
+
+}
+
+/* =========================================================
+   REPLIES
+========================================================= */
+
+.comment-replies{
+
+    margin-top:18px;
+
+    margin-left:35px;
+
+    border-left:2px solid rgba(0,0,0,.08);
+
+    padding-left:18px;
+
+}
+
+/* =========================================================
+   LOADING COMMENTS
+========================================================= */
+
+.comment-loading{
+
+    height:80px;
+
+    border-radius:10px;
+
+    background:#e6e6e6;
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.comment-loading::after{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:
+
+    linear-gradient(
+
+        90deg,
+
+        transparent,
+
+        rgba(255,255,255,.55),
+
+        transparent
+
+    );
+
+    transform:translateX(-100%);
+
+    animation:commentShimmer 1.2s infinite;
+
+}
+
+/* =========================================================
+   EMPTY COMMENTS
+========================================================= */
+
+.comments-empty{
+
+    text-align:center;
+
+    padding:50px;
+
+    color:#666;
+
+    font-family:"Caveat",cursive;
+
+    font-size:34px;
+
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:700px){
+
+.comment{
+
+    flex-direction:column;
+
+}
+
+.comment-box{
+
+    flex-direction:column;
+
+}
+
+.comment-avatar{
+
+    width:46px;
+    height:46px;
+
+}
+
+.comment-replies{
+
+    margin-left:18px;
+
+}
+
+}
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes commentShimmer{
+
+0%{
+
+transform:translateX(-100%);
+
+}
+
+100%{
+
+transform:translateX(100%);
+
+}
+
+}
+```
 
