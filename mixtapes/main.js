@@ -1217,6 +1217,26 @@
         };
     }
 
+    .video-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    min-height: 300px;
+    overflow: hidden;
+    background: #000;
+}
+
+#youtube-player,
+#youtube-player iframe,
+.video-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    border: 0;
+    display: block;
+}
+
     /* =====================================================
        PUBLIC API
     ===================================================== */
