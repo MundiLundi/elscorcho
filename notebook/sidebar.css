@@ -1,19 +1,762 @@
-/* Right-hand diary page */
-.sidebar{position:sticky;top:18px;width:320px;padding:24px 20px 28px;border-left:1px solid rgba(87,68,42,.21);box-shadow:-8px 0 15px rgba(73,52,27,.06)}
-.sidebar h2{font-family:var(--serif);font-size:27px;font-weight:400;margin-bottom:20px;padding-bottom:8px;border-bottom:1px solid rgba(93,73,47,.35)}
-.sidebar h2::after{content:"video index";display:block;margin-top:5px;font-family:var(--mono);font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:#887960}
-#feed{display:flex;flex-direction:column;gap:17px}
-.feed-item{position:relative;display:grid;grid-template-columns:112px 1fr;gap:12px;padding:8px;background:rgba(248,240,221,.72);border:1px solid rgba(90,71,44,.27);box-shadow:2px 4px 9px rgba(51,38,21,.13);transition:.16s ease;overflow:hidden}
-.feed-item:hover{transform:translateY(-2px);box-shadow:3px 7px 14px rgba(51,38,21,.19);background:#f5ecd8}
-.feed-item.active,.feed-item.is-active{outline:2px solid var(--red);outline-offset:2px}
-.feed-thumbnail{position:relative;aspect-ratio:4/3;overflow:hidden;background:#111;filter:sepia(.15) contrast(.96)}
-.feed-thumbnail img{width:100%;height:100%;object-fit:cover;display:block}
-.feed-duration{position:absolute;right:4px;bottom:4px;padding:2px 4px;background:rgba(0,0,0,.78);color:#eee;font-family:var(--mono);font-size:8px}
-.feed-play{display:none}
-.feed-content,.feed-info,.feed-meta{min-width:0}
-.feed-title{font-family:var(--serif);font-size:14px;line-height:1.2;font-weight:700;margin-bottom:4px}
-.feed-channel,.feed-views,.feed-age,.feed-note{font-family:var(--mono);font-size:8px;line-height:1.45;color:#756a58}
-.feed-note{margin-top:5px;font-family:var(--hand);font-size:15px;color:#5b5142}
-.feed-badge{display:inline-block;margin-top:5px;padding:2px 5px;border:1px solid #8d7652;font-family:var(--mono);font-size:7px;text-transform:uppercase;letter-spacing:.08em;color:#765d38}
-@media(max-width:900px){.sidebar{padding:22px;width:100%}.feed-item{grid-template-columns:145px 1fr}}
-@media(max-width:520px){.feed-item{grid-template-columns:108px 1fr}}
+/* =========================================================
+   EL SCORCHO
+   sidebar.css
+   Facing-page video index for the black diary theme
+========================================================= */
+
+/* =========================================================
+   SIDEBAR / FACING PAGE
+========================================================= */
+
+.sidebar{
+    position:sticky;
+    top:24px;
+
+    width:min(100%, 390px);
+    flex:0 0 390px;
+
+    min-height:620px;
+    padding:52px 38px 42px;
+
+    color:var(--ink, #2b2219);
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(73,54,29,.14),
+            transparent 14%,
+            transparent 88%,
+            rgba(73,54,29,.08)
+        ),
+        radial-gradient(
+            circle at 86% 12%,
+            rgba(112,75,32,.12),
+            transparent 24%
+        ),
+        radial-gradient(
+            circle at 18% 82%,
+            rgba(112,75,32,.09),
+            transparent 28%
+        ),
+        #e9dfc4;
+
+    border:1px solid rgba(68,48,24,.42);
+    border-radius:2px 8px 8px 2px;
+
+    box-shadow:
+        inset 18px 0 28px -24px rgba(37,25,12,.85),
+        inset -1px 0 rgba(255,255,255,.45),
+        0 18px 45px rgba(0,0,0,.34);
+
+    overflow:hidden;
+}
+
+.sidebar::before{
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    pointer-events:none;
+
+    opacity:.22;
+
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent 0 28px,
+            rgba(67,53,34,.17) 29px,
+            transparent 30px
+        );
+}
+
+.sidebar::after{
+    content:"";
+
+    position:absolute;
+    top:0;
+    left:0;
+    bottom:0;
+
+    width:18px;
+
+    pointer-events:none;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(48,32,17,.28),
+            rgba(48,32,17,.08) 45%,
+            transparent
+        );
+}
+
+.sidebar > *{
+    position:relative;
+    z-index:1;
+}
+
+.sidebar h2{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:14px;
+
+    margin:0 0 34px;
+    padding:0 0 12px;
+
+    color:#2b2119;
+
+    font-family:"Cormorant Garamond", Georgia, serif;
+    font-size:36px;
+    font-weight:600;
+    line-height:.95;
+    letter-spacing:.02em;
+
+    border-bottom:1px solid rgba(67,48,26,.42);
+
+    transform:rotate(-.35deg);
+}
+
+.sidebar h2::before{
+    content:"INDEX";
+
+    color:#72514a;
+
+    font-family:"Space Mono", monospace;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.22em;
+}
+
+.sidebar h2::after{
+    content:"";
+
+    width:44px;
+    height:1px;
+
+    margin-bottom:4px;
+
+    background:#73504a;
+
+    transform:rotate(-3deg);
+}
+
+/* =========================================================
+   FEED
+========================================================= */
+
+#feed{
+    display:flex;
+    flex-direction:column;
+    gap:27px;
+}
+
+.feed-item{
+    position:relative;
+
+    display:grid;
+    grid-template-columns:132px minmax(0, 1fr);
+    gap:14px;
+
+    padding:11px 11px 13px;
+
+    color:inherit;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,.46),
+            rgba(239,232,211,.74)
+        );
+
+    border:1px solid rgba(75,54,29,.30);
+    border-radius:1px;
+
+    box-shadow:
+        2px 5px 12px rgba(48,34,18,.18);
+
+    cursor:pointer;
+    overflow:visible;
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        border-color .18s ease;
+}
+
+.feed-item:nth-child(odd){
+    transform:rotate(-.55deg);
+}
+
+.feed-item:nth-child(even){
+    transform:rotate(.5deg);
+}
+
+.feed-item:hover{
+    z-index:3;
+
+    transform:
+        translateY(-3px)
+        rotate(0deg);
+
+    border-color:rgba(98,57,49,.58);
+
+    box-shadow:
+        3px 9px 18px rgba(48,34,18,.24);
+}
+
+.feed-item:focus-visible{
+    outline:2px solid #74473f;
+    outline-offset:4px;
+}
+
+.feed-item:active{
+    transform:translateY(-1px) rotate(0deg);
+}
+
+/* paper/photo corner */
+.feed-item::before{
+    content:"";
+
+    position:absolute;
+    right:-1px;
+    bottom:-1px;
+
+    width:17px;
+    height:17px;
+
+    pointer-events:none;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(91,68,39,.18) 0 48%,
+            #d8ccb0 51% 100%
+        );
+
+    box-shadow:-2px -2px 3px rgba(65,44,22,.08);
+}
+
+/* handwritten index number */
+.feed-item::after{
+    content:counter(feed-entry, decimal-leading-zero);
+
+    position:absolute;
+    top:-11px;
+    left:-17px;
+
+    color:#70473f;
+
+    font-family:"Caveat", cursive;
+    font-size:17px;
+    line-height:1;
+
+    transform:rotate(-8deg);
+}
+
+#feed{
+    counter-reset:feed-entry;
+}
+
+.feed-item{
+    counter-increment:feed-entry;
+}
+
+/* =========================================================
+   THUMBNAIL / MOUNTED PHOTO
+========================================================= */
+
+.feed-thumbnail{
+    position:relative;
+
+    width:100%;
+    aspect-ratio:4/3;
+
+    overflow:hidden;
+
+    background:#171513;
+
+    border:6px solid #f3ecda;
+    outline:1px solid rgba(44,31,19,.35);
+
+    box-shadow:
+        1px 3px 8px rgba(39,28,16,.25);
+
+    filter:sepia(.14) saturate(.82) contrast(.97);
+}
+
+.feed-thumbnail img{
+    display:block;
+
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+
+    transition:
+        transform .28s ease,
+        filter .28s ease;
+}
+
+.feed-item:hover .feed-thumbnail img{
+    transform:scale(1.035);
+    filter:contrast(1.04);
+}
+
+/* worn photo glaze */
+.feed-thumbnail::before{
+    content:"";
+
+    position:absolute;
+    inset:0;
+    z-index:2;
+
+    pointer-events:none;
+
+    background:
+        linear-gradient(
+            120deg,
+            rgba(255,255,255,.19),
+            transparent 24%,
+            transparent 74%,
+            rgba(54,37,20,.12)
+        );
+}
+
+/* =========================================================
+   VIDEO DURATION
+========================================================= */
+
+.feed-duration{
+    position:absolute;
+    right:5px;
+    bottom:5px;
+    z-index:4;
+
+    padding:2px 5px;
+
+    color:#eee6d5;
+    background:rgba(27,22,18,.86);
+
+    border:1px solid rgba(238,230,213,.26);
+    border-radius:1px;
+
+    font-family:"Space Mono", monospace;
+    font-size:9px;
+    font-weight:700;
+    letter-spacing:.04em;
+}
+
+/* =========================================================
+   PLAY OVERLAY
+========================================================= */
+
+.feed-play{
+    position:absolute;
+    left:50%;
+    top:50%;
+    z-index:5;
+
+    display:grid;
+    place-items:center;
+
+    width:36px;
+    height:36px;
+
+    color:#efe5ce;
+    background:rgba(78,45,40,.88);
+
+    border:1px solid rgba(239,229,206,.48);
+    border-radius:50%;
+
+    font-size:14px;
+
+    opacity:0;
+
+    transform:
+        translate(-50%, -50%)
+        scale(.82);
+
+    transition:
+        opacity .16s ease,
+        transform .16s ease;
+}
+
+.feed-item:hover .feed-play,
+.feed-item:focus-visible .feed-play{
+    opacity:1;
+
+    transform:
+        translate(-50%, -50%)
+        scale(1);
+}
+
+/* =========================================================
+   FEED TEXT
+========================================================= */
+
+.feed-info{
+    min-width:0;
+    padding:2px 2px 0;
+}
+
+.feed-title{
+    margin:0 0 8px;
+
+    color:#2a2119;
+
+    font-family:"Cormorant Garamond", Georgia, serif;
+    font-size:18px;
+    font-weight:650;
+    line-height:1.12;
+
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    overflow:hidden;
+}
+
+.feed-channel{
+    margin:0 0 5px;
+
+    color:#66594a;
+
+    font-family:"Space Mono", monospace;
+    font-size:9px;
+    line-height:1.35;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+}
+
+.feed-meta{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:4px;
+
+    color:#847765;
+
+    font-family:"Space Mono", monospace;
+    font-size:8px;
+    line-height:1.4;
+}
+
+.feed-meta span:not(:last-child)::after{
+    content:"/";
+
+    margin-left:4px;
+
+    color:#76514a;
+}
+
+.feed-note{
+    grid-column:1 / -1;
+
+    margin:7px 2px -1px;
+
+    color:#74473f;
+
+    font-family:"Caveat", cursive;
+    font-size:17px;
+    line-height:1.05;
+    text-align:right;
+
+    transform:rotate(-1.2deg);
+}
+
+/* =========================================================
+   ACTIVE / CURRENT VIDEO
+========================================================= */
+
+.feed-item.active,
+.feed-item.is-playing{
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,.55),
+            rgba(225,211,182,.88)
+        );
+
+    border-color:#70473f;
+
+    box-shadow:
+        0 0 0 1px rgba(112,71,63,.23),
+        3px 8px 16px rgba(48,34,18,.23);
+}
+
+.feed-item.active .feed-title,
+.feed-item.is-playing .feed-title{
+    color:#633d37;
+}
+
+.feed-item.active .feed-note::before,
+.feed-item.is-playing .feed-note::before{
+    content:"playing now — ";
+}
+
+.feed-item.active::before,
+.feed-item.is-playing::before{
+    background:
+        linear-gradient(
+            135deg,
+            rgba(112,71,63,.20) 0 48%,
+            #d5c5a5 51% 100%
+        );
+}
+
+/* =========================================================
+   LABEL / TAPE
+========================================================= */
+
+.feed-badge{
+    position:absolute;
+    top:-9px;
+    right:12px;
+    z-index:7;
+
+    padding:4px 8px 3px;
+
+    color:#efe5ce;
+    background:#6d443d;
+
+    border:1px solid rgba(44,28,24,.35);
+
+    font-family:"Space Mono", monospace;
+    font-size:8px;
+    font-weight:700;
+    line-height:1;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+
+    transform:rotate(2deg);
+
+    box-shadow:1px 3px 6px rgba(40,28,16,.22);
+}
+
+.feed-tape{
+    position:absolute;
+    top:-8px;
+    left:33px;
+    z-index:7;
+
+    width:58px;
+    height:17px;
+
+    pointer-events:none;
+
+    background:
+        repeating-linear-gradient(
+            90deg,
+            rgba(255,255,255,.12) 0 2px,
+            rgba(76,55,28,.03) 2px 4px
+        ),
+        rgba(188,171,129,.72);
+
+    border-left:1px dashed rgba(87,63,33,.15);
+    border-right:1px dashed rgba(87,63,33,.15);
+
+    box-shadow:0 2px 4px rgba(45,31,15,.14);
+
+    transform:rotate(-3deg);
+}
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.feed-empty{
+    padding:30px 22px;
+
+    color:#62463f;
+    background:rgba(247,239,216,.78);
+
+    border:1px solid rgba(75,54,29,.28);
+
+    font-family:"Caveat", cursive;
+    font-size:22px;
+    line-height:1.25;
+    text-align:center;
+
+    transform:rotate(-.5deg);
+
+    box-shadow:2px 5px 12px rgba(48,34,18,.15);
+}
+
+/* =========================================================
+   LOADING PLACEHOLDERS
+========================================================= */
+
+.feed-skeleton{
+    position:relative;
+
+    height:128px;
+
+    overflow:hidden;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(89,71,45,.08),
+            rgba(255,255,255,.18),
+            rgba(89,71,45,.08)
+        ),
+        #ddd1b4;
+
+    border:1px solid rgba(75,54,29,.24);
+
+    box-shadow:2px 5px 11px rgba(48,34,18,.12);
+}
+
+.feed-skeleton::after{
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    background:
+        linear-gradient(
+            100deg,
+            transparent 18%,
+            rgba(255,255,255,.38) 45%,
+            transparent 72%
+        );
+
+    transform:translateX(-100%);
+    animation:sidebarShimmer 1.6s infinite;
+}
+
+/* =========================================================
+   OPTIONAL COMPACT FEED ITEM
+========================================================= */
+
+.feed-item.compact{
+    grid-template-columns:108px minmax(0, 1fr);
+    gap:12px;
+    padding:9px;
+}
+
+.feed-item.compact .feed-thumbnail{
+    aspect-ratio:4/3;
+}
+
+.feed-item.compact .feed-info{
+    padding-top:0;
+}
+
+.feed-item.compact .feed-title{
+    font-size:16px;
+}
+
+.feed-item.compact .feed-note{
+    display:none;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width:1100px){
+
+    .sidebar{
+        position:relative;
+        top:auto;
+
+        width:100%;
+        max-width:none;
+        flex-basis:auto;
+
+        min-height:0;
+
+        padding:44px 36px 38px;
+
+        border-radius:2px 2px 8px 8px;
+    }
+
+    #feed{
+        display:grid;
+        grid-template-columns:
+            repeat(auto-fit, minmax(270px, 1fr));
+        gap:24px;
+    }
+
+}
+
+@media (max-width:700px){
+
+    .sidebar{
+        padding:37px 22px 31px;
+    }
+
+    .sidebar h2{
+        margin-bottom:28px;
+        font-size:31px;
+    }
+
+    #feed{
+        grid-template-columns:1fr;
+    }
+
+    .feed-item,
+    .feed-item:nth-child(odd),
+    .feed-item:nth-child(even){
+        transform:none;
+    }
+
+    .feed-item:hover{
+        transform:translateY(-2px);
+    }
+
+}
+
+@media (max-width:430px){
+
+    .sidebar{
+        padding:32px 16px 26px;
+    }
+
+    .feed-item,
+    .feed-item.compact{
+        grid-template-columns:104px minmax(0, 1fr);
+        gap:10px;
+    }
+
+    .feed-title{
+        font-size:16px;
+    }
+
+    .feed-note{
+        font-size:16px;
+    }
+
+}
+
+/* =========================================================
+   MOTION PREFERENCE
+========================================================= */
+
+@media (prefers-reduced-motion:reduce){
+
+    .feed-item,
+    .feed-thumbnail img,
+    .feed-play{
+        transition:none;
+    }
+
+    .feed-skeleton::after{
+        animation:none;
+    }
+
+}
+
+/* =========================================================
+   KEYFRAMES
+========================================================= */
+
+@keyframes sidebarShimmer{
+
+    100%{
+        transform:translateX(100%);
+    }
+
+}
