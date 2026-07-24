@@ -1,1 +1,153 @@
 
+/* scrapbook.css
+   Pinkerton Diary aesthetic
+*/
+
+:root{
+  --paper:#ece2c8;
+  --paper-dark:#d6c8a6;
+  --ink:#2b2219;
+  --accent:#6b3d37;
+  --tape:#bfae84;
+}
+
+body{
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,.03), transparent 30%),
+    #171514;
+}
+
+.paper-panel{
+  position:relative;
+  background:
+    linear-gradient(rgba(255,255,255,.04),rgba(0,0,0,.03)),
+    var(--paper);
+  border:1px solid #a99770;
+  border-radius:2px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.25),
+    0 10px 30px rgba(0,0,0,.35);
+  padding:2.5rem;
+}
+
+.paper-panel::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:.08;
+  background-image:
+    repeating-linear-gradient(
+      transparent 0 26px,
+      rgba(50,40,25,.18) 27px,
+      transparent 28px
+    );
+}
+
+.paper-panel::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(120,90,45,.18), transparent 20%),
+    radial-gradient(circle at 80% 70%, rgba(90,70,35,.12), transparent 24%);
+  mix-blend-mode:multiply;
+}
+
+.scrapbook-intro{
+  transform:rotate(-0.4deg);
+}
+
+.handwritten-note{
+  font-family:"Caveat",cursive;
+  color:var(--accent);
+  font-size:2rem;
+  margin:0 0 .5rem;
+}
+
+.paper-tape{
+  position:absolute;
+  width:90px;
+  height:26px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,.18),
+      rgba(255,255,255,.18) 2px,
+      rgba(0,0,0,.02) 2px,
+      rgba(0,0,0,.02) 4px
+    ),
+    var(--tape);
+  opacity:.8;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+
+.paper-tape-left{
+  top:-10px;
+  left:26px;
+  transform:rotate(-8deg);
+}
+
+.paper-tape-right{
+  top:-10px;
+  right:26px;
+  transform:rotate(9deg);
+}
+
+.video-info{
+  margin-top:2rem;
+  transform:rotate(.15deg);
+}
+
+.video-title{
+  font-family:"Cormorant Garamond", Georgia, serif;
+  font-size:2.2rem;
+  color:#201812;
+  margin-bottom:.35rem;
+}
+
+.video-channel{
+  text-transform:uppercase;
+  letter-spacing:.18em;
+  font-size:.82rem;
+  color:#6f6151;
+}
+
+.video-description{
+  line-height:1.8;
+  color:#40362b;
+}
+
+.cassette-section{
+  display:flex;
+  justify-content:center;
+  margin:3rem 0;
+}
+
+.cassette{
+  width:260px;
+  padding:1rem;
+  background:#2a2928;
+  border-radius:4px;
+  border:2px solid #111;
+  color:#ddd4bc;
+  text-align:center;
+  box-shadow:0 8px 20px rgba(0,0,0,.35);
+}
+
+.cassette::before,
+.cassette::after{
+  content:"";
+  display:inline-block;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  margin:0 18px;
+  border:4px solid #7f7769;
+  background:#222;
+}
+
+.background-doodles{
+  display:none;
+}

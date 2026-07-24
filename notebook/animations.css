@@ -1,0 +1,595 @@
+/* =========================================================
+   EL SCORCHO
+   animations.css
+   Subtle paper, diary, and archival motion
+========================================================= */
+
+/* =========================================================
+   GLOBAL MOTION VARIABLES
+========================================================= */
+
+:root{
+    --motion-fast:140ms;
+    --motion-normal:220ms;
+    --motion-slow:420ms;
+    --motion-ease:cubic-bezier(.22,.68,.28,1);
+    --motion-paper:cubic-bezier(.2,.72,.22,1);
+}
+
+/* =========================================================
+   PAGE ENTRANCE
+========================================================= */
+
+body.is-loading .site-shell,
+body.is-loading .book-shell,
+body.is-loading main{
+    opacity:0;
+    transform:translateY(12px) scale(.995);
+}
+
+.site-shell,
+.book-shell,
+main{
+    animation:diaryFadeIn 620ms var(--motion-paper) both;
+}
+
+/* =========================================================
+   BOOK / PAPER REVEAL
+========================================================= */
+
+.paper-panel,
+.sidebar,
+.comments-section,
+.shop-book{
+    animation:paperSettle 520ms var(--motion-paper) both;
+    transform-origin:center top;
+}
+
+.paper-panel:nth-of-type(2){
+    animation-delay:70ms;
+}
+
+.sidebar{
+    animation-delay:110ms;
+}
+
+.comments-section{
+    animation-delay:150ms;
+}
+
+/* =========================================================
+   VIDEO FRAME
+========================================================= */
+
+.video-frame,
+.player-frame,
+#player-container{
+    animation:photoMountIn 500ms var(--motion-paper) both;
+    transform-origin:center;
+}
+
+.video-frame:hover,
+.player-frame:hover,
+#player-container:hover{
+    box-shadow:
+        0 15px 34px rgba(0,0,0,.34),
+        0 0 0 1px rgba(112,71,63,.13);
+}
+
+/* =========================================================
+   FEED ENTRIES
+========================================================= */
+
+.feed-item{
+    opacity:0;
+    animation:entrySlideIn 430ms var(--motion-paper) forwards;
+}
+
+.feed-item:nth-child(1){animation-delay:80ms;}
+.feed-item:nth-child(2){animation-delay:130ms;}
+.feed-item:nth-child(3){animation-delay:180ms;}
+.feed-item:nth-child(4){animation-delay:230ms;}
+.feed-item:nth-child(5){animation-delay:280ms;}
+.feed-item:nth-child(6){animation-delay:330ms;}
+.feed-item:nth-child(n+7){animation-delay:360ms;}
+
+.feed-item.is-removing{
+    animation:paperRemove 260ms ease-in forwards;
+}
+
+.feed-item.is-added{
+    animation:paperAdd 420ms var(--motion-paper) both;
+}
+
+/* =========================================================
+   COMMENTS
+========================================================= */
+
+.comment{
+    opacity:0;
+    animation:commentWriteIn 420ms var(--motion-paper) forwards;
+}
+
+.comment:nth-child(1){animation-delay:90ms;}
+.comment:nth-child(2){animation-delay:140ms;}
+.comment:nth-child(3){animation-delay:190ms;}
+.comment:nth-child(4){animation-delay:240ms;}
+.comment:nth-child(5){animation-delay:290ms;}
+.comment:nth-child(n+6){animation-delay:320ms;}
+
+.comment.is-new{
+    animation:newEntry 620ms var(--motion-paper) both;
+}
+
+.comment.is-removing{
+    animation:paperRemove 240ms ease-in forwards;
+}
+
+/* =========================================================
+   SHOP ITEMS
+========================================================= */
+
+.shop-overlay.open{
+    animation:overlayFadeIn 180ms ease-out both;
+}
+
+.shop-overlay.closing{
+    animation:overlayFadeOut 160ms ease-in both;
+}
+
+.shop-overlay.open .shop{
+    animation:bookOpen 460ms var(--motion-paper) both;
+    transform-origin:center;
+}
+
+.shop-overlay.closing .shop{
+    animation:bookClose 220ms ease-in both;
+}
+
+.shop-item{
+    opacity:0;
+    animation:shopCardIn 360ms var(--motion-paper) forwards;
+}
+
+.shop-item:nth-child(1){animation-delay:90ms;}
+.shop-item:nth-child(2){animation-delay:135ms;}
+.shop-item:nth-child(3){animation-delay:180ms;}
+.shop-item:nth-child(4){animation-delay:225ms;}
+.shop-item:nth-child(5){animation-delay:270ms;}
+.shop-item:nth-child(6){animation-delay:315ms;}
+.shop-item:nth-child(n+7){animation-delay:340ms;}
+
+/* =========================================================
+   BUTTONS AND SMALL CONTROLS
+========================================================= */
+
+button,
+.button,
+.comment-action,
+.shop-buy,
+.shop-close{
+    transition:
+        transform var(--motion-fast) ease,
+        background-color var(--motion-fast) ease,
+        border-color var(--motion-fast) ease,
+        color var(--motion-fast) ease,
+        box-shadow var(--motion-fast) ease,
+        opacity var(--motion-fast) ease;
+}
+
+button:hover,
+.button:hover{
+    transform:translateY(-1px);
+}
+
+button:active,
+.button:active{
+    transform:translateY(0) scale(.985);
+}
+
+button.is-pressed,
+.button.is-pressed{
+    animation:buttonPress 180ms ease;
+}
+
+/* =========================================================
+   TAPE AND PAPER DETAILS
+========================================================= */
+
+.paper-tape,
+.feed-tape,
+.comment::before,
+.shop-item::before{
+    transform-origin:center;
+}
+
+.paper-panel:hover .paper-tape,
+.feed-item:hover .feed-tape,
+.comment:hover::before,
+.shop-item:hover::before{
+    animation:tapeLift 320ms ease both;
+}
+
+/* =========================================================
+   HANDWRITTEN NOTES
+========================================================= */
+
+.handwritten-note,
+.feed-note,
+.comment-note,
+.shop-subtitle{
+    animation:inkAppear 640ms ease both;
+}
+
+.is-writing{
+    overflow:hidden;
+    white-space:nowrap;
+    width:0;
+    animation:handwrite 1.1s steps(24,end) forwards;
+}
+
+/* =========================================================
+   TOAST / MESSAGE
+========================================================= */
+
+.toast,
+.ui-toast,
+#toast{
+    transform-origin:center bottom;
+}
+
+.toast.show,
+.ui-toast.show,
+#toast.show{
+    animation:toastIn 260ms var(--motion-ease) both;
+}
+
+.toast.hide,
+.ui-toast.hide,
+#toast.hide{
+    animation:toastOut 200ms ease-in both;
+}
+
+/* =========================================================
+   SAVE / POINT FEEDBACK
+========================================================= */
+
+.points-pop{
+    animation:pointsPop 430ms var(--motion-ease) both;
+}
+
+.points-flash{
+    animation:pointsFlash 420ms ease both;
+}
+
+.save-indicator.is-saving{
+    animation:savePulse 900ms ease-in-out infinite;
+}
+
+.save-indicator.is-saved{
+    animation:savedConfirm 480ms ease both;
+}
+
+/* =========================================================
+   VHS / PLAYER EFFECTS
+========================================================= */
+
+.vhs-mode .video-frame,
+.vhs-mode .player-frame,
+.vhs-mode #player-container{
+    animation:vhsFlicker 4.5s steps(1,end) infinite;
+}
+
+.vhs-mode .video-frame::after,
+.vhs-mode .player-frame::after,
+.vhs-mode #player-container::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    opacity:.13;
+    background:
+        repeating-linear-gradient(
+            0deg,
+            rgba(255,255,255,.10) 0 1px,
+            transparent 1px 3px
+        );
+    animation:scanlineDrift 8s linear infinite;
+}
+
+/* =========================================================
+   SKELETONS
+========================================================= */
+
+.feed-skeleton::after,
+.comment-skeleton::after{
+    animation-duration:1.8s;
+    animation-timing-function:ease-in-out;
+}
+
+/* =========================================================
+   KEYFRAMES
+========================================================= */
+
+@keyframes diaryFadeIn{
+    from{
+        opacity:0;
+        transform:translateY(12px) scale(.995);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+}
+
+@keyframes paperSettle{
+    0%{
+        opacity:0;
+        transform:translateY(14px) rotateX(1.5deg);
+    }
+    65%{
+        opacity:1;
+        transform:translateY(-2px) rotateX(0);
+    }
+    100%{
+        opacity:1;
+        transform:translateY(0) rotateX(0);
+    }
+}
+
+@keyframes photoMountIn{
+    from{
+        opacity:0;
+        transform:translateY(10px) scale(.985) rotate(-.15deg);
+        filter:sepia(.2) brightness(.92);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0) scale(1) rotate(0);
+        filter:none;
+    }
+}
+
+@keyframes entrySlideIn{
+    from{
+        opacity:0;
+        transform:translateX(10px) translateY(5px) rotate(.8deg);
+    }
+    to{
+        opacity:1;
+    }
+}
+
+@keyframes commentWriteIn{
+    from{
+        opacity:0;
+        transform:translateY(9px) rotate(.45deg);
+    }
+    to{
+        opacity:1;
+    }
+}
+
+@keyframes newEntry{
+    0%{
+        opacity:0;
+        transform:translateY(-10px) scale(.985) rotate(-.5deg);
+        background-color:rgba(252,244,218,.95);
+    }
+    60%{
+        opacity:1;
+        transform:translateY(2px) scale(1.005) rotate(.1deg);
+    }
+    100%{
+        opacity:1;
+        transform:translateY(0) scale(1) rotate(0);
+    }
+}
+
+@keyframes paperAdd{
+    from{
+        opacity:0;
+        transform:translateY(-12px) scale(.98) rotate(-1deg);
+    }
+    to{
+        opacity:1;
+    }
+}
+
+@keyframes paperRemove{
+    to{
+        opacity:0;
+        transform:translateY(8px) scale(.975) rotate(1deg);
+        filter:blur(.4px);
+    }
+}
+
+@keyframes overlayFadeIn{
+    from{opacity:0;}
+    to{opacity:1;}
+}
+
+@keyframes overlayFadeOut{
+    from{opacity:1;}
+    to{opacity:0;}
+}
+
+@keyframes bookOpen{
+    0%{
+        opacity:0;
+        transform:perspective(1400px) rotateX(4deg) scale(.97);
+    }
+    65%{
+        opacity:1;
+        transform:perspective(1400px) rotateX(-.5deg) scale(1.005);
+    }
+    100%{
+        opacity:1;
+        transform:perspective(1400px) rotateX(0) scale(1);
+    }
+}
+
+@keyframes bookClose{
+    to{
+        opacity:0;
+        transform:perspective(1400px) rotateX(3deg) scale(.975);
+    }
+}
+
+@keyframes shopCardIn{
+    from{
+        opacity:0;
+        transform:translateY(12px) rotate(-.8deg);
+    }
+    to{
+        opacity:1;
+    }
+}
+
+@keyframes buttonPress{
+    0%{transform:scale(1);}
+    50%{transform:scale(.965);}
+    100%{transform:scale(1);}
+}
+
+@keyframes tapeLift{
+    0%{
+        filter:none;
+    }
+    50%{
+        filter:brightness(1.04);
+    }
+    100%{
+        filter:none;
+    }
+}
+
+@keyframes inkAppear{
+    from{
+        opacity:0;
+        filter:blur(.45px);
+    }
+    to{
+        opacity:1;
+        filter:blur(0);
+    }
+}
+
+@keyframes handwrite{
+    from{width:0;}
+    to{width:100%;}
+}
+
+@keyframes toastIn{
+    from{
+        opacity:0;
+        transform:translateY(12px) scale(.96);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+}
+
+@keyframes toastOut{
+    to{
+        opacity:0;
+        transform:translateY(8px) scale(.98);
+    }
+}
+
+@keyframes pointsPop{
+    0%{
+        opacity:0;
+        transform:translateY(3px) scale(.92);
+    }
+    55%{
+        opacity:1;
+        transform:translateY(-2px) scale(1.07);
+    }
+    100%{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+}
+
+@keyframes pointsFlash{
+    0%,100%{
+        color:inherit;
+        text-shadow:none;
+    }
+    45%{
+        color:#8a5a4e;
+        text-shadow:0 0 10px rgba(138,90,78,.25);
+    }
+}
+
+@keyframes savePulse{
+    0%,100%{opacity:.55;}
+    50%{opacity:1;}
+}
+
+@keyframes savedConfirm{
+    0%{
+        opacity:.55;
+        transform:scale(.98);
+    }
+    55%{
+        opacity:1;
+        transform:scale(1.035);
+    }
+    100%{
+        opacity:1;
+        transform:scale(1);
+    }
+}
+
+@keyframes vhsFlicker{
+    0%,6%,8%,42%,44%,100%{
+        filter:none;
+    }
+    7%{
+        filter:brightness(.96) contrast(1.04);
+    }
+    43%{
+        filter:brightness(1.025) saturate(.9);
+    }
+}
+
+@keyframes scanlineDrift{
+    from{
+        background-position:0 0;
+    }
+    to{
+        background-position:0 36px;
+    }
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion:reduce){
+
+    *,
+    *::before,
+    *::after{
+        animation-duration:.001ms !important;
+        animation-iteration-count:1 !important;
+        scroll-behavior:auto !important;
+        transition-duration:.001ms !important;
+    }
+
+    .vhs-mode .video-frame,
+    .vhs-mode .player-frame,
+    .vhs-mode #player-container{
+        animation:none !important;
+    }
+
+    .vhs-mode .video-frame::after,
+    .vhs-mode .player-frame::after,
+    .vhs-mode #player-container::after{
+        animation:none !important;
+    }
+
+}
