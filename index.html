@@ -3,117 +3,164 @@
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>El Scorcho</title>
+    <title>El Scorcho</title>
 
-<link rel="icon" href="img/favicon.png">
+    <link rel="icon" href="images/favicon.png">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Caveat:wght@700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Caveat:wght@700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="css/main.css">
-<link rel="stylesheet" href="css/scrapbook.css">
+    <link rel="stylesheet" href="notebook/main.css">
+    <link rel="stylesheet" href="notebook/scrapbook.css">
+    <link rel="stylesheet" href="notebook/sidebar.css">
+    <link rel="stylesheet" href="notebook/shop.css">
+    <link rel="stylesheet" href="notebook/comments.css">
+    <link rel="stylesheet" href="notebook/animations.css">
 
 </head>
 
 <body>
 
 <div class="background-doodles">
-
-<span class="star">★</span>
-<span class="heart">♡</span>
-<span class="music">♪</span>
-<span class="star2">☆</span>
-
+    <span class="star">★</span>
+    <span class="heart">♡</span>
+    <span class="music">♪</span>
+    <span class="star2">☆</span>
 </div>
 
-<div class="layout">
+<header class="topbar">
 
-<main>
+    <div class="logo">
 
-<header class="page-header">
+        <h1>EL SCORCHO</h1>
 
-<div class="logo">
+        <p>Pinkerton • 1996</p>
 
-EL SCORCHO
+    </div>
 
-<div class="subtitle">
+    <div class="sticky-note">
 
-Pinkerton • 1996
+        NOW PLAYING
 
-</div>
-
-</div>
-
-<div class="sticky">
-
-NOW PLAYING
-
-</div>
+    </div>
 
 </header>
 
-<section class="video-section">
+<div class="layout">
 
-<div class="video-frame">
+    <main class="content">
 
-<div id="player"></div>
+        <div class="draw-link">
+
+            <a href="draw.html">
+
+                ✏ Draw Weezer From Memory
+
+            </a>
+
+        </div>
+
+        <section class="video-section">
+
+            <div class="video-frame">
+
+                <div id="player"></div>
+
+                <div id="loader"></div>
+
+                <button id="sound-hint">
+
+                    🔇 Click for Sound
+
+                </button>
+
+            </div>
+
+        </section>
+
+        <section class="video-info">
+
+            <h2 id="main-title">
+
+                El Scorcho
+
+            </h2>
+
+            <div id="points-hud"></div>
+
+            <div id="channel-row"></div>
+
+            <div id="action-row"></div>
+
+            <div id="description-box"></div>
+
+        </section>
+
+        <section class="comments">
+
+            <h2 id="comments-header">
+
+                Comments
+
+            </h2>
+
+            <div id="comment-input-area"></div>
+
+            <div id="comments-list"></div>
+
+        </section>
+
+    </main>
+
+    <aside class="sidebar">
+
+        <h2>
+
+            Up Next
+
+        </h2>
+
+        <div id="feed"></div>
+
+    </aside>
 
 </div>
 
-</section>
+<div id="shop-backdrop">
 
-<section class="video-info">
+    <div id="shop-modal">
 
-<h1 id="main-title">
+        <div id="shop-header"></div>
 
-El Scorcho
+        <div id="shop-items"></div>
 
-</h1>
+        <div id="shop-multiplier"></div>
 
-<div id="points-hud">
+        <div id="shop-extras"></div>
 
-<!-- JS inserts HUD -->
+        <div id="shop-rebirth"></div>
 
-</div>
-
-<div id="video-meta">
-
-<!-- JS inserts channel info -->
+    </div>
 
 </div>
 
-</section>
+<div id="admin-panel"></div>
 
-<section id="comments">
+<script src="https://www.youtube.com/iframe_api"></script>
 
-<!-- comments.js -->
-
-</section>
-
-</main>
-
-<aside>
-
-<h2>
-
-Up Next
-
-</h2>
-
-<div id="feed">
-
-</div>
-
-</aside>
-
-</div>
-
-<script src="js/main.js"></script>
+<script src="mixtapes/save.js"></script>
+<script src="mixtapes/player.js"></script>
+<script src="mixtapes/feed.js"></script>
+<script src="mixtapes/shop.js"></script>
+<script src="mixtapes/comments.js"></script>
+<script src="mixtapes/upgrades.js"></script>
+<script src="mixtapes/ui.js"></script>
+<script src="mixtapes/main.js"></script>
 
 </body>
 
