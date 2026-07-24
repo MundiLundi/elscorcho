@@ -1,451 +1,129 @@
-/* =========================================================
-   EL SCORCHO
-   main.css
-   Base layout and global styles
-========================================================= */
-
+/* El Scorcho — black clothbound diary */
 :root{
-
-    --bg:#173b6c;
-    --bg-dark:#0f2747;
-
-    --paper:#faf7ef;
-    --paper-dark:#eee3d3;
-
-    --pink:#e58cb4;
-    --pink-dark:#c45a8d;
-
-    --blue:#6ea9ff;
-    --red:#d65d63;
-
-    --text:#252525;
-    --text-light:#6c6c6c;
-
-    --border:#d7d7d7;
-
-    --shadow:rgba(0,0,0,.25);
-
-    --radius:18px;
-
-    --transition:.2s ease;
-
+  --cover:#0c0c0b;
+  --cover-2:#171613;
+  --cover-edge:#2b2924;
+  --paper:#e9dfc8;
+  --paper-2:#f3ead6;
+  --paper-3:#d8c9aa;
+  --ink:#211d18;
+  --ink-soft:#665d4f;
+  --rule:rgba(91,78,58,.16);
+  --red:#7d2527;
+  --gold:#aa8c52;
+  --shadow:rgba(0,0,0,.62);
+  --serif:Georgia,"Times New Roman",serif;
+  --hand:"Caveat",cursive;
+  --mono:"Space Mono",monospace;
+  --sans:"Oswald",sans-serif;
 }
 
-/* =========================================================
-   RESET
-========================================================= */
-
-*{
-
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-
-}
-
-html{
-
-    scroll-behavior:smooth;
-
-}
-
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;background:#080807}
 body{
-
-    min-height:100vh;
-
-    background:
-    linear-gradient(rgba(255,255,255,.03),rgba(255,255,255,.03)),
-    linear-gradient(180deg,var(--bg),var(--bg-dark));
-
-    color:var(--text);
-
-    font-family:"Oswald",sans-serif;
-
-    overflow-x:hidden;
-
+  min-height:100vh;
+  color:var(--ink);
+  font-family:var(--serif);
+  background:
+    radial-gradient(circle at 20% 0%,rgba(255,255,255,.035),transparent 28%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.012) 0 1px,transparent 1px 4px),
+    #080807;
+  overflow-x:hidden;
 }
-
-/* =========================================================
-   TYPOGRAPHY
-========================================================= */
-
-h1,h2,h3,h4{
-
-    font-weight:700;
-
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background:radial-gradient(ellipse at center,transparent 52%,rgba(0,0,0,.5) 100%);
+  mix-blend-mode:multiply;
 }
+a{color:inherit;text-decoration:none}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+img{max-width:100%}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
-a{
-
-    color:inherit;
-    text-decoration:none;
-
+.topbar{
+  width:min(1180px,calc(100% - 34px));
+  min-height:70px;
+  margin:24px auto 0;
+  padding:17px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+  color:#d7c6a1;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.025),transparent 16%,rgba(255,255,255,.02) 82%,transparent),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px),
+    var(--cover);
+  border:1px solid #2b2924;
+  border-bottom-color:#030303;
+  box-shadow:0 12px 30px rgba(0,0,0,.55),inset 0 0 0 2px #050505;
 }
-
-button{
-
-    font:inherit;
-
+.site-logo{
+  font-family:var(--serif);font-size:17px;letter-spacing:.16em;text-transform:uppercase;
+  color:#c5aa73;text-shadow:0 1px #000;
 }
-
-input,
-textarea,
-button{
-
-    outline:none;
-    border:none;
-
+.topbar-actions{display:flex;align-items:center;gap:14px}
+.points-hud{display:flex;align-items:baseline;gap:10px;color:#b8aa90;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.points-value{font-size:18px;color:#dbc38f}
+.btn,.shop-open-button{
+  border:1px solid #7f6b46;background:#141310;color:#d8c49b;padding:9px 14px;
+  font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;
+  box-shadow:inset 0 0 0 1px #050505,0 2px 0 #000;transition:.16s ease;
 }
+.btn:hover,.shop-open-button:hover{background:#211e18;color:#f2dfb6;transform:translateY(-1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
 
-/* =========================================================
-   PAGE LAYOUT
-========================================================= */
-
-.layout{
-
-    display:flex;
-
-    align-items:flex-start;
-
-    gap:40px;
-
-    max-width:1700px;
-
-    margin:auto;
-
-    padding:30px;
-
+.page-shell{
+  position:relative;
+  width:min(1180px,calc(100% - 34px));
+  margin:0 auto 54px;
+  padding:34px 36px 46px;
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.08),transparent 3%,transparent 48.8%,rgba(0,0,0,.11) 49.8%,rgba(255,255,255,.16) 50.2%,transparent 51.2%,transparent 97%,rgba(0,0,0,.08)),
+    repeating-linear-gradient(0deg,transparent 0 31px,var(--rule) 31px 32px),
+    var(--paper);
+  border:15px solid var(--cover);
+  border-top-width:18px;border-bottom-width:22px;
+  box-shadow:0 28px 70px rgba(0,0,0,.68),inset 0 0 0 1px rgba(84,68,45,.35);
 }
+.page-shell::before,.page-shell::after{content:"";position:absolute;top:-18px;bottom:-22px;width:12px;background:linear-gradient(90deg,#050505,#25221d,#070706);z-index:2}
+.page-shell::before{left:-15px}.page-shell::after{right:-15px;transform:scaleX(-1)}
+.content-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:38px;align-items:start}
+.main-column{min-width:0}
 
-.content{
+.paper-panel{position:relative;background:rgba(246,237,216,.66);border:1px solid rgba(94,75,48,.24);box-shadow:0 8px 18px rgba(67,51,31,.13)}
+.scrapbook-intro{padding:24px 28px 20px;margin-bottom:24px;background:transparent;border:0;box-shadow:none}
+.scrapbook-intro h1{font-family:var(--serif);font-size:clamp(34px,5vw,62px);line-height:.95;font-weight:400;letter-spacing:-.03em;color:#1d1914}
+.handwritten-note{font-family:var(--hand);font-size:25px;color:var(--red);transform:rotate(-2deg);margin-bottom:2px}
+.intro-copy{max-width:590px;margin-top:13px;font-size:14px;line-height:1.65;color:var(--ink-soft);font-style:italic}
+.paper-tape{display:none}
 
-    flex:1;
-
-}
-
-.sidebar{
-
-    width:360px;
-
-    flex-shrink:0;
-
-}
-
-/* =========================================================
-   PANELS
-========================================================= */
-
-.paper{
-
-    background:var(--paper);
-
-    border-radius:var(--radius);
-
-    padding:22px;
-
-    box-shadow:
-    0 12px 30px var(--shadow);
-
-}
-
-.paper-title{
-
-    margin-bottom:18px;
-
-}
-
-/* =========================================================
-   VIDEO
-========================================================= */
-
+.video-section{margin-bottom:22px}
 .video-frame{
-
-    position:relative;
-
-    aspect-ratio:16/9;
-
-    width:100%;
-
-    background:black;
-
-    border-radius:18px;
-
-    overflow:hidden;
-
-    box-shadow:
-    0 15px 35px rgba(0,0,0,.4);
-
+  position:relative;width:100%;aspect-ratio:16/9;background:#090909;padding:12px;
+  border:1px solid #3b3730;box-shadow:0 11px 22px rgba(0,0,0,.42),inset 0 0 0 3px #171615;
 }
+.video-frame::before{content:"";position:absolute;inset:7px;pointer-events:none;border:1px solid rgba(255,255,255,.08);z-index:3}
+#youtube-player,.video-frame iframe{display:block;width:100%!important;height:100%!important;min-height:0!important;border:0}
+.video-progress-panel{margin-top:11px;padding:0 3px;font-family:var(--mono);font-size:9px;color:#595044}
+.video-time-row{display:flex;justify-content:space-between;margin-bottom:6px}
+.video-progress{display:block;width:100%;height:4px;accent-color:var(--red)}
 
-#player{
+.video-info{padding:22px 25px 20px;margin-bottom:22px}
+.video-title{font-size:25px;font-weight:400;letter-spacing:.01em}
+.video-channel{margin-top:3px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--red)}
+.video-description{margin-top:10px;font-family:var(--hand);font-size:22px;color:#4f473b}
+.video-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.video-actions .btn{background:#302b24;border-color:#514738;color:#e2d4b7}
 
-    width:100%;
-    height:100%;
+.cassette-section{padding:5px 0 25px}
+.cassette{width:min(460px,86%);height:92px;margin:auto;position:relative;background:#22201d;border:2px solid #0b0b0a;border-radius:7px;box-shadow:0 9px 18px rgba(0,0,0,.34),inset 0 0 0 3px #3a3731}
+.cassette-label{position:absolute;left:12%;right:12%;top:12px;padding:7px;background:#d9ceb5;border:1px solid #8d8069;text-align:center;font-family:var(--hand);font-size:18px;color:#3e372d}
 
+.background-doodles{display:none}
+
+@media(max-width:900px){
+  .content-layout{grid-template-columns:1fr}.page-shell{padding:25px 22px 38px}.sidebar{position:relative!important;top:auto!important;width:100%!important}
 }
-
-/* =========================================================
-   BUTTONS
-========================================================= */
-
-.btn{
-
-    display:inline-flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    gap:8px;
-
-    padding:12px 20px;
-
-    background:var(--pink);
-
-    color:white;
-
-    border-radius:999px;
-
-    cursor:pointer;
-
-    transition:var(--transition);
-
-    font-weight:600;
-
-}
-
-.btn:hover{
-
-    background:var(--pink-dark);
-
-    transform:translateY(-2px);
-
-}
-
-.btn-secondary{
-
-    background:#ececec;
-
-    color:#333;
-
-}
-
-/* =========================================================
-   SHOP
-========================================================= */
-
-#shop-backdrop{
-
-    position:fixed;
-
-    inset:0;
-
-    background:rgba(0,0,0,.55);
-
-    display:none;
-
-    justify-content:center;
-
-    align-items:center;
-
-    z-index:999;
-
-}
-
-#shop-modal{
-
-    width:min(900px,95vw);
-
-}
-
-/* =========================================================
-   COMMENTS
-========================================================= */
-
-.comment{
-
-    display:flex;
-
-    gap:14px;
-
-    margin-bottom:20px;
-
-}
-
-.comment-avatar{
-
-    width:46px;
-    height:46px;
-
-    border-radius:50%;
-
-    background:#ddd;
-
-    flex-shrink:0;
-
-}
-
-.comment-body{
-
-    flex:1;
-
-}
-
-/* =========================================================
-   SIDEBAR
-========================================================= */
-
-.sidebar{
-
-    position:sticky;
-
-    top:20px;
-
-}
-
-.sidebar h2{
-
-    margin-bottom:20px;
-
-}
-
-.feed-item{
-
-    margin-bottom:20px;
-
-}
-
-/* =========================================================
-   FORMS
-========================================================= */
-
-input,
-textarea{
-
-    width:100%;
-
-    background:white;
-
-    padding:12px;
-
-    border-radius:12px;
-
-    border:1px solid var(--border);
-
-    color:var(--text);
-
-}
-
-textarea{
-
-    resize:vertical;
-
-}
-
-/* =========================================================
-   UTILITIES
-========================================================= */
-
-.hidden{
-
-    display:none!important;
-
-}
-
-.center{
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-}
-
-.row{
-
-    display:flex;
-
-    gap:15px;
-
-}
-
-.column{
-
-    display:flex;
-
-    flex-direction:column;
-
-}
-
-.space-between{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-}
-
-/* =========================================================
-   SCROLLBAR
-========================================================= */
-
-::-webkit-scrollbar{
-
-    width:12px;
-
-}
-
-::-webkit-scrollbar-track{
-
-    background:#12335d;
-
-}
-
-::-webkit-scrollbar-thumb{
-
-    background:#5f86cb;
-
-    border-radius:10px;
-
-}
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width:1100px){
-
-.layout{
-
-    flex-direction:column;
-
-}
-
-.sidebar{
-
-    width:100%;
-
-    position:static;
-
-}
-
-}
-
-@media (max-width:700px){
-
-.layout{
-
-    padding:15px;
-
-}
-
-.btn{
-
-    width:100%;
-
-}
-
+@media(max-width:620px){
+  .topbar{width:calc(100% - 18px);margin-top:9px;padding:13px 14px;align-items:flex-start}.topbar-actions{flex-direction:column;align-items:flex-end;gap:8px}
+  .page-shell{width:calc(100% - 18px);border-width:9px;border-top-width:12px;padding:18px 13px 30px}.scrapbook-intro{padding:15px 8px}.video-frame{padding:6px}.video-info{padding:18px 15px}.btn{padding:8px 10px}
 }
