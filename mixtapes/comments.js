@@ -20,7 +20,7 @@
     const POST_REWARD = 5;
     const LIKE_REWARD = 1;
 
-    const DEFAULT_AUTHOR = "Anonymous Scorcho";
+    const DEFAULT_AUTHOR = "Scorcho";
 
     const DEFAULT_AVATAR =
         "elscorcho/images/avatar-default.png";
@@ -28,9 +28,9 @@
     const SYSTEM_COMMENTS = [
         {
             id: "system-rivers",
-            author: "El Scorcho Archive",
+            author: "Rvers Cuomo",
             avatar:
-                "elscorcho/images/avatar-rivers.png",
+                "elscorcho/images/rivers.png",
             text:
                 "How stupid is it? I can't talk about it.",
             createdAt: "1996-09-24T00:00:00.000Z",
@@ -40,21 +40,8 @@
             verified: true,
             deletable: false,
             replyTo: null
-        },
-        {
-            id: "system-pink-triangle",
-            author: "Pink Triangle",
-            avatar: DEFAULT_AVATAR,
-            text:
-                "This tape has been stuck in my stereo for several weeks.",
-            createdAt: "2005-01-01T00:00:00.000Z",
-            likes: 42,
-            likedByUser: false,
-            pinned: false,
-            verified: false,
-            deletable: false,
-            replyTo: null
         }
+
     ];
 
     /* =====================================================
