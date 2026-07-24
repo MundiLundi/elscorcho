@@ -342,56 +342,9 @@ a {
 ========================================================= */
 
 .page-shell {
-    position: relative;
-    width: min(calc(100% - 36px), var(--page-width));
-    margin: 0 auto 42px;
-    padding: 20px;
-    border: 1px solid rgba(190, 166, 110, 0.2);
-    border-top: 0;
-    border-radius: 2px 2px 12px 12px;
-    background:
-        linear-gradient(90deg, rgba(255, 255, 255, 0.028), transparent 2.5%, transparent 97.5%, rgba(255, 255, 255, 0.02)),
-        repeating-linear-gradient(
-            90deg,
-            rgba(255, 255, 255, 0.012) 0 1px,
-            transparent 1px 4px
-        ),
-        #11100d;
-    box-shadow:
-        0 2px 0 rgba(255, 255, 255, 0.025) inset,
-        0 30px 70px rgba(0, 0, 0, 0.56);
-}
-
-.page-shell::before,
-.page-shell::after {
-    content: "";
-    position: absolute;
-    top: 15px;
-    bottom: 15px;
-    width: 5px;
-    pointer-events: none;
-    background: linear-gradient(to bottom, #7f6b43, #b19a68 40%, #695838);
-    opacity: 0.42;
-}
-
-.page-shell::before {
-    left: 7px;
-}
-
-.page-shell::after {
-    right: 7px;
-}
-
-.content-layout {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--sidebar-width);
-    align-items: start;
-    gap: var(--page-gap);
-}
-
-.main-column {
-    min-width: 0;
+    width: min(98vw, 1800px);
+    min-height: 98vh;
+    margin: 0 auto;
 }
 
 /* =========================================================
