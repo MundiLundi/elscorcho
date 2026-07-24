@@ -495,16 +495,6 @@ a {
         0 18px 34px rgba(0, 0, 0, 0.52);
 }
 
-.video-section::before {
-    content: "ARCHIVE TRANSFER • SIDE A";
-    display: block;
-    margin: 0 0 9px 2px;
-    color: #a99467;
-    font-family: "Space Mono", monospace;
-    font-size: 0.62rem;
-    letter-spacing: 0.13em;
-}
-
 .video-frame {
     position: relative;
     width: 100%;
