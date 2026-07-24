@@ -342,9 +342,26 @@ a {
 ========================================================= */
 
 .page-shell {
-    width: min(98vw, 1800px);
-    min-height: 98vh;
-    margin: 0 auto;
+    width: 100vw;
+    min-height: 100vh;
+    margin: 0;
+    padding: 24px;
+}
+
+/* =========================================================
+   FULL WIDTH LAYOUT
+========================================================= */
+
+.content-layout {
+    width: 100%;
+    max-width: none;
+    display: flex;
+    justify-content: center;
+}
+
+.main-column {
+    width: min(100%, 1700px);
+    flex: 1;
 }
 
 /* =========================================================
@@ -429,23 +446,9 @@ a {
 ========================================================= */
 
 .video-section {
-    position: relative;
-    margin-bottom: 22px;
-    padding: 16px 16px 12px;
-    border: 1px solid #34312a;
-    border-radius: 5px;
-    background:
-        repeating-linear-gradient(
-            0deg,
-            rgba(255, 255, 255, 0.015) 0 1px,
-            transparent 1px 3px
-        ),
-        linear-gradient(145deg, #2a2925, #11110f 60%, #080807);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.07) inset,
-        0 0 0 6px #0a0a09,
-        0 0 0 7px rgba(175, 147, 86, 0.22),
-        0 18px 34px rgba(0, 0, 0, 0.52);
+    width: 100%;
+    margin: 0 0 22px;
+    padding: 16px;
 }
 
 .video-frame {
@@ -453,13 +456,7 @@ a {
     width: 100%;
     aspect-ratio: 16 / 9;
     overflow: hidden;
-    border: 1px solid #3a3832;
-    border-radius: 2px;
-    background:
-        radial-gradient(circle at 45% 42%, #1e1e1b, #050505 72%);
-    box-shadow:
-        0 0 0 1px #000,
-        0 2px 18px rgba(0, 0, 0, 0.9) inset;
+    background: #000;
 }
 
 #youtube-player,
