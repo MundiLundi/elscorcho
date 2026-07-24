@@ -1,1049 +1,995 @@
-     <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Lets the YouTube iframe use muted autoplay (blocked otherwise in Chromium / Safari) -->
-  <meta http-equiv="Permissions-Policy" content="autoplay=*, encrypted-media=*, fullscreen=*">
-  <title>El Scorcho</title>
-  <link rel="icon" href="favicon.png">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background: #0f0f0f; color: #f1f1f1; }
-    .layout { display: flex; gap: 0; min-height: 100vh; }
-    .main { flex: 1; padding: 20px 16px 20px 24px; max-width: calc(100% - 360px); overflow-y: auto; }
-    .video-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 10px; overflow: hidden; }
-    .video-wrap iframe,
-    .video-wrap > div { width: 100% !important; height: 100% !important; border: none; display: block; }
-    .loading-overlay { position: absolute; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.15s; z-index: 10; }
-    .loading-overlay.show { opacity: 1; pointer-events: all; }
-    .spinner { width: 36px; height: 36px; border: 3px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    <meta charset="UTF-8">
 
-    /* ── Points HUD ─────────────────────────────────────────────── */
-    .points-hud {
-      display: flex; align-items: center; gap: 14px;
-      background: #1a1a1a; border: 1px solid #2a2a2a;
-      border-radius: 12px; padding: 10px 16px; margin-bottom: 10px;
-    }
-    .points-icon { font-size: 20px; }
-    .points-info { flex: 1; min-width: 0; }
-    .points-label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
-    .points-value { font-size: 22px; font-weight: 700; color: #f1f1f1; line-height: 1; }
-    .points-value span { font-size: 13px; font-weight: 400; color: #aaa; margin-left: 4px; }
-    .progress-wrap { flex: 2; min-width: 0; }
-    .progress-label { font-size: 11px; color: #aaa; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
-    .progress-bar { height: 6px; background: #2a2a2a; border-radius: 3px; overflow: hidden; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, #ff0000, #ff6b35); border-radius: 3px; transition: width 0.5s ease; width: 0%; }
-    .session-badge { background: #272727; border-radius: 8px; padding: 6px 12px; text-align: center; flex-shrink: 0; }
-    .session-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.6px; }
-    .session-value { font-size: 15px; font-weight: 700; color: #f1f1f1; }
-    .mult-badge {
-      font-size: 10px; font-weight: 800; color: #ffb347;
-      background: #2a1810; border-radius: 5px; padding: 2px 6px;
-      margin-left: 6px; vertical-align: middle; letter-spacing: 0.02em;
-    }
-    .mult-badge[hidden] { display: none !important; }
-    .rebirth-mult-badge {
-      font-size: 10px; font-weight: 800; color: #7dd3fc;
-      background: #0c1820; border-radius: 5px; padding: 2px 6px;
-      margin-left: 6px; vertical-align: middle; letter-spacing: 0.02em;
-    }
-    .rebirth-mult-badge[hidden] { display: none !important; }
-    .shop-trigger {
-      background: linear-gradient(135deg, #1e1e3a, #2a1a3a);
-      border: 1px solid #4a3a6a; border-radius: 8px;
-      padding: 6px 12px; text-align: center; cursor: pointer;
-      flex-shrink: 0; transition: all 0.2s; user-select: none;
-    }
-    .shop-trigger:hover { border-color: #7c5cbc; background: linear-gradient(135deg, #252545, #321f4a); }
-    .shop-trigger-icon { font-size: 18px; }
-    .shop-trigger-label { font-size: 10px; color: #9a7acc; text-transform: uppercase; letter-spacing: 0.6px; }
-    .timer-chip {
-      font-size: 11px; color: #ff6b35; font-weight: 700;
-      background: #1a1000; border-radius: 5px; padding: 2px 6px;
-    }
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
 
-    /* ── Shop modal ─────────────────────────────────────────────── */
-    .shop-backdrop {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
-      z-index: 1000; display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.2s;
-    }
-    .shop-backdrop.open { opacity: 1; pointer-events: all; }
-    .shop-modal {
-      background: #141414; border: 1px solid #2a2a2a;
-      border-radius: 16px; width: 440px; max-width: calc(100vw - 32px);
-      max-height: 90vh; overflow-y: auto;
-      transform: translateY(20px); transition: transform 0.2s;
-    }
-    .shop-backdrop.open .shop-modal { transform: translateY(0); }
-    .shop-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 20px 14px; border-bottom: 1px solid #222;
-      position: sticky; top: 0; background: #141414; z-index: 1;
-    }
-    .shop-title { font-size: 17px; font-weight: 700; }
-    .shop-balance { font-size: 13px; color: #aaa; margin-top: 2px; }
-    .shop-balance strong { color: #f1f1f1; }
-    .shop-close {
-      background: #272727; border: none; color: #f1f1f1;
-      width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
-      font-size: 14px; display: flex; align-items: center; justify-content: center;
-    }
-    .shop-close:hover { background: #3f3f3f; }
-    .shop-section-title {
-      font-size: 11px; color: #666; text-transform: uppercase;
-      letter-spacing: 0.8px; padding: 14px 20px 8px;
-    }
-    .shop-item {
-      display: flex; align-items: center; gap: 14px;
-      padding: 14px 20px; transition: background 0.15s;
-    }
-    .shop-item.can-buy { cursor: pointer; }
-    .shop-item.can-buy:hover { background: #1a1a1a; }
-    .shop-item-icon {
-      width: 46px; height: 46px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center; font-size: 24px;
-      flex-shrink: 0;
-    }
-    .shop-item-body { flex: 1; min-width: 0; }
-    .shop-item-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
-    .active-badge { font-size: 10px; color: #4caf50; background: #0d2010; border-radius: 4px; padding: 2px 6px; font-weight: 700; letter-spacing: 0.4px; }
-    .shop-item-desc { font-size: 12px; color: #888; line-height: 1.5; }
-    .shop-item-unlocked { font-size: 11px; color: #4caf50; margin-top: 4px; font-weight: 600; }
-    .shop-item-locked { font-size: 11px; color: #555; margin-top: 4px; }
-    .shop-item-right { flex-shrink: 0; }
-    .buy-btn {
-      background: linear-gradient(135deg, #4a2a8a, #7c3cbc);
-      border: none; color: #fff; border-radius: 8px;
-      padding: 8px 14px; font-size: 13px; font-weight: 700;
-      cursor: pointer; transition: all 0.15s; white-space: nowrap; display: block;
-    }
-    .buy-btn:hover:not(:disabled) { background: linear-gradient(135deg, #5a3a9a, #8c4ccc); transform: scale(1.04); }
-    .buy-btn:disabled { background: #222; color: #444; cursor: not-allowed; }
-    .buy-btn.tag-owned { background: #0d2010; color: #4caf50; cursor: default; pointer-events: none; }
-    .buy-btn.battle-pass {
-      background: linear-gradient(135deg, #8a5a12, #c9a227);
-      color: #1a1200;
-    }
-    .buy-btn.battle-pass:hover:not(:disabled) {
-      background: linear-gradient(135deg, #9d6a18, #dcb82e);
-      transform: scale(1.04);
-    }
-    .buy-btn.rebirth-btn {
-      background: linear-gradient(135deg, #14532d, #22c55e);
-      color: #fff;
-    }
-    .buy-btn.rebirth-btn:hover:not(:disabled) {
-      background: linear-gradient(135deg, #166534, #4ade80);
-      transform: scale(1.04);
-    }
-    .shop-divider { height: 1px; background: #1c1c1c; margin: 0 20px; }
+    <meta
+        name="description"
+        content="El Scorcho — a Pinkerton-inspired Weezer video scrapbook."
+    >
 
-    /* ── Point pop ───────────────────────────────────────────────── */
-    .point-pop {
-      position: fixed; pointer-events: none; z-index: 9999;
-      font-size: 15px; font-weight: 700; color: #ff6b35;
-      animation: floatUp 1.3s ease-out forwards;
-    }
-    @keyframes floatUp {
-      0%   { opacity: 1; transform: translateY(0) scale(1.2); }
-      100% { opacity: 0; transform: translateY(-70px) scale(0.8); }
-    }
-    @keyframes purchaseFlash {
-      0%,100% { border-color: #2a2a2a; }
-      50%      { border-color: #7c3cbc; box-shadow: 0 0 16px rgba(124,60,188,0.4); }
-    }
-    .hud-flash { animation: purchaseFlash 0.5s ease; }
+    <meta name="theme-color" content="#101010">
 
-    /* ── Video meta ──────────────────────────────────────────────── */
-    .video-meta { padding: 12px 0 8px; }
-    .video-title { font-size: 18px; font-weight: 600; color: #f1f1f1; line-height: 1.3; margin-bottom: 10px; }
-    .channel-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .channel-avatar { width: 36px; height: 36px; border-radius: 50%; background: #cc0000; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; }
-    .channel-name { font-size: 14px; font-weight: 600; color: #f1f1f1; }
-    .channel-subs { font-size: 12px; color: #aaa; }
-    .subscribe-btn { margin-left: auto; background: #f1f1f1; color: #0f0f0f; border: none; border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
-    .subscribe-btn:hover { background: #ddd; }
-    .action-row { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; }
-    .action-btn { background: #272727; border: none; border-radius: 20px; color: #f1f1f1; padding: 8px 14px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .action-btn:hover { background: #3f3f3f; }
-    .action-btn .divider { width: 1px; height: 16px; background: #555; margin: 0 2px; }
-    .copy-toast { background: #f1f1f1; color: #0f0f0f; border-radius: 20px; padding: 8px 14px; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
-    .copy-toast.show { opacity: 1; }
-    .desc-box { background: #272727; border-radius: 10px; padding: 12px 14px; margin-bottom: 24px; cursor: pointer; }
-    .desc-stats { font-size: 13px; font-weight: 600; color: #f1f1f1; margin-bottom: 6px; }
-    .desc-text { font-size: 13px; color: #f1f1f1; line-height: 1.6; white-space: pre-wrap; }
-    .desc-text.collapsed { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .desc-toggle { font-size: 13px; font-weight: 600; color: #f1f1f1; margin-top: 8px; }
-    .comments-section { padding-bottom: 40px; }
-    .comments-header { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
-    .comment-input-row { display: flex; gap: 12px; margin-bottom: 28px; }
-    .comment-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; }
-    .comment-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid #555; color: #f1f1f1; font-size: 13px; padding: 4px 0; outline: none; }
-    .comment-input::placeholder { color: #717171; }
-    .comment { display: flex; gap: 12px; margin-bottom: 20px; }
-    .comment-body { flex: 1; }
-    .comment-author { font-size: 13px; font-weight: 600; color: #f1f1f1; margin-bottom: 4px; }
-    .comment-author span { font-size: 12px; font-weight: 400; color: #717171; margin-left: 8px; }
-    .comment-text { font-size: 13px; color: #f1f1f1; line-height: 1.6; margin-bottom: 6px; }
-    .comment-actions { display: flex; align-items: center; gap: 12px; }
-    .comment-like { font-size: 12px; color: #aaa; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-    .comment-like:hover { color: #f1f1f1; }
-    .reply-btn { font-size: 12px; font-weight: 700; color: #f1f1f1; background: none; border: none; cursor: pointer; }
-    .reply-btn:hover { color: #aaa; }
-    .sidebar { width: 360px; padding: 20px 16px 20px 8px; overflow-y: auto; flex-shrink: 0; }
-    .sidebar-title { font-size: 13px; color: #aaa; margin-bottom: 12px; font-weight: 500; letter-spacing: 0.3px; }
-    .card { display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer; border-radius: 8px; padding: 4px; transition: background 0.15s; }
-    .card:hover { background: #1f1f1f; }
-    .card.active { background: #272727; }
-    .thumb-wrap { position: relative; flex-shrink: 0; width: 160px; height: 90px; border-radius: 6px; overflow: hidden; background: #222; }
-    .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .thumb-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e, #16213e); font-size: 28px; }
-    .play-badge { position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.8); color: #fff; font-size: 10px; padding: 2px 5px; border-radius: 3px; font-weight: 600; letter-spacing: 0.3px; }
-    .card-info { flex: 1; display: flex; flex-direction: column; gap: 2px; padding-top: 2px; }
-    .card-title { font-size: 13px; font-weight: 500; color: #f1f1f1; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .card-channel { font-size: 12px; color: #aaa; margin-top: 2px; }
-    .card-meta { font-size: 12px; color: #aaa; }
-    .active-bar { width: 3px; background: #f00; border-radius: 2px; flex-shrink: 0; align-self: stretch; margin-right: 2px; }
+    <title>El Scorcho</title>
 
-    @media (max-width: 768px) {
-      .main { max-width: 100% !important; width: 100% !important; padding: 0; }
-      .video-wrap { border-radius: 0; }
-      .video-meta { padding: 10px 12px 8px; }
-      .comments-section { padding: 0 12px 40px; }
-      .sidebar { display: none !important; }
-      .points-hud { margin: 8px 0; border-radius: 10px; flex-wrap: wrap; gap: 10px; }
-      .progress-wrap { min-width: 100%; order: 4; }
-    }
-    @media (orientation: landscape) and (max-height: 500px) {
-      .sidebar { display: none !important; }
-      .main { max-width: 100% !important; width: 100% !important; padding: 0; }
-      .video-wrap { border-radius: 0; }
-    }
+    <!-- Favicon -->
+    <link
+        rel="icon"
+        type="image/png"
+        href="elscorcho/images/favicon.png"
+    >
 
-    /* ── Dev admin (set ADMIN_MODE = false before release) ─────────── */
-    .admin-panel {
-      position: fixed; bottom: 12px; left: 12px; z-index: 2000;
-      background: #1a1008; border: 1px solid #7c3c1a; border-radius: 10px;
-      padding: 10px 12px; font-size: 12px; color: #ffb366;
-      max-width: min(280px, calc(100vw - 24px));
-      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-      display: none;
-    }
-    .admin-panel.open { display: block; }
-    .admin-panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #ff8833; margin-bottom: 8px; }
-    .admin-panel p { color: #ccc; line-height: 1.45; margin-bottom: 8px; }
-    .admin-panel kbd {
-      background: #2a1810; border: 1px solid #553220; border-radius: 4px;
-      padding: 1px 6px; font-family: inherit; font-size: 11px; color: #fff;
-    }
-    .admin-grant-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-    .admin-grant-row input[type="number"] {
-      width: 72px; background: #0f0f0f; border: 1px solid #443322; color: #f1f1f1;
-      border-radius: 6px; padding: 6px 8px; font-size: 13px;
-    }
-    .admin-grant-btn {
-      background: #7c3c1a; border: none; color: #fff; border-radius: 6px;
-      padding: 6px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
-    }
-    .admin-grant-btn:hover { background: #a34d22; }
-  </style>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Main styles -->
+    <link
+        rel="stylesheet"
+        href="elscorcho/notebook/main.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="elscorcho/notebook/scrapbook.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="elscorcho/notebook/sidebar.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="elscorcho/notebook/shop.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="elscorcho/notebook/comments.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="elscorcho/notebook/animations.css"
+    >
 </head>
+
 <body>
 
-<div class="layout">
-  <div class="main">
-    <div style="margin-bottom:12px;">
-      <a href="draw.html" style="display:inline-block;padding:8px 16px;background:#141414;color:#f1f1f1;text-decoration:none;font-size:13px;font-weight:bold;border-radius:8px;border:1px solid #2a2a2a;transition:all 0.2s ease;" onmouseover="this.style.background='#1f1f1f';this.style.borderColor='#444'" onmouseout="this.style.background='#141414';this.style.borderColor='#2a2a2a'">Draw Weezer from memory</a>
-    </div>
-    <div class="video-wrap">
-      <div id="player"></div>
-      <div class="loading-overlay" id="loader"><div class="spinner"></div></div>
-    </div>
+    <!-- ==================================================
+         BACKGROUND DECORATIONS
+    =================================================== -->
 
-    <div class="video-meta">
-
-      <!-- ── Points HUD ── -->
-      <div class="points-hud" id="points-hud">
-        <div class="points-icon">🎯</div>
-        <div class="points-info">
-          <div class="points-label">Total Points<span class="mult-badge" id="mult-badge" hidden></span><span class="rebirth-mult-badge" id="rebirth-mult-badge" hidden></span></div>
-          <div class="points-value" id="total-points">0 <span>pts</span></div>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-label">
-            <span id="next-point-label">Next point</span>
-            <span class="timer-chip" id="timer-chip">⏱ 45s</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-        </div>
-        <div class="session-badge">
-          <div class="session-label">This video</div>
-          <div class="session-value" id="session-points">+0</div>
-        </div>
-        <div class="session-badge" title="Times you have rebirthed after buying everything">
-          <div class="session-label">Rebirths</div>
-          <div class="session-value" id="rebirth-count">0</div>
-        </div>
-        <div class="shop-trigger" onclick="openShop()">
-          <div class="shop-trigger-icon">🛒</div>
-          <div class="shop-trigger-label">Shop</div>
-        </div>
-      </div>
-
-      <div class="video-title" id="main-title">El Scorcho</div>
-
-      <div class="channel-row">
-        <div class="channel-avatar">W</div>
-        <div>
-          <div class="channel-name">Weezer</div>
-          <div class="channel-subs">1.71M subscribers</div>
-        </div>
-        <button class="subscribe-btn">Subscribe</button>
-      </div>
-
-      <div class="action-row">
-        <button class="action-btn">👍 574M <span class="divider"></span> 👎</button>
-        <button class="action-btn" onclick="copyLink()">↗ Share</button>
-        <span class="copy-toast" id="copy-toast">Link copied!</span>
-      </div>
-
-      <div class="desc-box" onclick="toggleDesc()">
-        <div class="desc-stats">1B views &nbsp;·&nbsp; a few years ago  </div>
-        <div class="desc-text collapsed" id="desc-text"> What's your favorite Weezer video?: <a href="https://www.udiscovermusic.com" target="_blank" style="color:#3ea6ff;text-decoration:none;">uDiscoverMusic</a>
-
-Facebook: <a href="https://www.facebook.com/weezer" target="_blank" style="color:#3ea6ff;text-decoration:none;">facebook.com/weezer</a>
-Twitter/X: <a href="https://twitter.com/weezer" target="_blank" style="color:#3ea6ff;text-decoration:none;">twitter.com/weezer</a>
-Instagram: <a href="https://www.instagram.com/weezer" target="_blank" style="color:#3ea6ff;text-decoration:none;">instagram.com/weezer</a>
-Website: <a href="https://weezer.com" target="_blank" style="color:#3ea6ff;text-decoration:none;">weezer.com</a>
-
-Music video by Weezer</div>
-        <div class="desc-toggle" id="desc-toggle">...more</div>
-      </div>
+    <div
+        class="background-doodles"
+        aria-hidden="true"
+    >
+        <span class="star">★</span>
+        <span class="heart">♥</span>
+        <span class="music">♪</span>
+        <span class="star2">✦</span>
     </div>
 
-    <div class="comments-section">
-      <div class="comments-header">847 Comments</div>
-      <div class="comment-input-row">
-        <div class="comment-avatar" style="background:#555;">Y</div>
-        <input class="comment-input" type="text" placeholder="Add a comment...">
-      </div>
-      <div id="comments-list"></div>
-    </div>
-  </div>
 
-  <div class="sidebar">
-    <div class="sidebar-title">Up next</div>
-    <div id="feed"></div>
-  </div>
-</div>
+    <!-- ==================================================
+         TOP BAR
+    =================================================== -->
 
-<!-- ── Shop Modal ─────────────────────────────────────────────────────────── -->
-<div class="shop-backdrop" id="shop-backdrop" onclick="backdropClose(event)">
-  <div class="shop-modal">
-    <div class="shop-header">
-      <div>
-        <div class="shop-title">⚡ Speed Shop</div>
-        <div class="shop-balance">Balance: <strong id="shop-balance">0</strong> pts</div>
-      </div>
-      <button class="shop-close" onclick="closeShop()">✕</button>
-    </div>
-    <div class="shop-section-title">Timer Upgrades · spend points to earn faster</div>
-    <div id="shop-items"></div>
-    <div class="shop-section-title">Point multiplier · up to 10× per earn</div>
-    <div id="shop-multiplier"></div>
-    <div class="shop-section-title">Features &amp; Passes</div>
-    <div id="shop-extras"></div>
-    <div class="shop-section-title">Rebirth · max out the shop, then reset for a permanent boost</div>
-    <div id="shop-rebirth"></div>
-    <div style="height:16px"></div>
-  </div>
-</div>
+    <header class="topbar">
 
-<!-- Dev admin: delete this block and ADMIN_* script when shipping -->
-<div class="admin-panel open" id="admin-panel" aria-hidden="false">
-  <h3>Admin (dev only)</h3>
-  <p>Press <kbd>P</kbd> to add points (when not typing in a field). Toggle this panel with <kbd>`</kbd> (backtick).</p>
-  <div class="admin-grant-row">
-    <label for="admin-amount">Per press</label>
-    <input type="number" id="admin-amount" value="100" min="1" step="1" />
-    <button type="button" class="admin-grant-btn" id="admin-grant-once">Add once</button>
-  </div>
-</div>
+        <a
+            class="site-logo"
+            href="#top"
+            aria-label="El Scorcho home"
+        >
+            El Scorcho
+        </a>
 
-<script>
-/** Set to false for production — removes admin UI and P cheat */
-const ADMIN_MODE = false;
+        <nav
+            class="topbar-actions"
+            aria-label="Site controls"
+        >
+            <div
+                id="points-hud"
+                class="points-hud"
+                aria-live="polite"
+            >
+                <span class="points-label">
+                    Scorcho Points
+                </span>
 
-// ─── Upgrade tiers ────────────────────────────────────────────────────────────
-const UPGRADES = [
-  { id:'u1', name:'Quick Watch',  icon:'⚡', bg:'#111f11', cost:3,  seconds:30, desc:'Earn a point every 30 seconds of watch time.',  requires:null },
-  { id:'u2', name:'Binge Mode',   icon:'🔥', bg:'#1f1108', cost:8,  seconds:20, desc:'Earn a point every 20 seconds of watch time.',  requires:'u1' },
-  { id:'u3', name:'Hyper Stream', icon:'💜', bg:'#13102a', cost:20, seconds:10, desc:'Earn a point every 10 seconds of watch time.',  requires:'u2' },
-  { id:'u4', name:'Turbo Fan',    icon:'🌀', bg:'#1a0a1a', cost:50, seconds:5,  desc:'Earn a point every 5 seconds of watch time. Max speed!', requires:'u3' },
-];
+                <strong
+                    id="points-value"
+                    class="points-value"
+                >
+                    0
+                </strong>
+            </div>
 
-/** Bonus catalog unlocked by Battle Pass (official Weezer uploads) */
-const PASS_CATALOG = [
-  { id:'kemivUKb4f4',   title:'Buddy Holly',           channel:'Weezer', meta:'Blue Album · 1994' },
-  { id:'ENXvZ9YRjbo',   title:"Say It Ain't So",       channel:'Weezer', meta:'Blue Album · 1994' },
-  { id:'LHQqqM5sr7g',   title:'Undone (The Sweater Song)', channel:'Weezer', meta:'Blue Album · 1994' },
-  { id:'HL_WvOly7mY',   title:'Beverly Hills',         channel:'Weezer', meta:'Make Believe · 2005' },
-  { id:'PQHPYelqr0E',   title:'Pork and Beans',        channel:'Weezer', meta:'Red Album · 2008' },
-  { id:'efPWrIvzGgc',   title:'Feels Like Summer',     channel:'Weezer', meta:'Pacific Daydream · 2017' },
-  { id:'_9BGLtqqkVI',   title:'Hash Pipe',             channel:'Weezer', meta:'Green Album · 2001' },
-  { id:'hOIsYA1QDuk',   title:'Keep Fishin’',          channel:'Weezer', meta:'Maladroit · 2002' },
-];
+            <button
+                id="shop-open"
+                class="btn shop-open-button"
+                type="button"
+            >
+                Merch Table
+            </button>
+        </nav>
 
-const FREE_VIDEO = { id:'okthJIVbi6g', title:'El Scorcho', channel:'Weezer', meta:'Pinkerton · 1996' };
+    </header>
 
-/** Point multiplier cap; costs below are for steps 1→2, 2→3, …, 9→10 */
-const MULT_MAX = 10;
-const MULT_STEP_COST = [25, 55, 105, 180, 280, 405, 560, 770, 1050];
 
-const EXTRA_SHOP = [
-  { id:'feat_autoplay', name:'Instant Play', icon:'▶️', bg:'#0d1a2a', cost:40,
-    desc:'Videos start muted & play automatically, including the next one when a video finishes (Up Next queue).',
-    battlePassClass: false },
-  { id:'feat_battlepass', name:'Weezer Battle Pass', icon:'🎫', bg:'#2a2210', cost:1000,
-    desc:'Unlock the full Up Next playlist: Buddy Holly, Say It Ain’t So, and more.',
-    battlePassClass: true },
-];
+    <!-- ==================================================
+         PAGE WRAPPER
+    =================================================== -->
 
-// ─── Persistent state ─────────────────────────────────────────────────────────
-function loadState() { try { return JSON.parse(localStorage.getItem('yt_pts') || '{}'); } catch { return {}; } }
-function saveState()  {
-  localStorage.setItem('yt_pts', JSON.stringify({
-    totalPoints, owned:[...owned], activeId,
-    autoplayOwned, battlePassOwned,
-    pointMultiplier,
-    rebirthCount,
-  }));
-}
+    <main
+        id="top"
+        class="page-shell"
+    >
 
-const S      = loadState();
-let totalPoints = S.totalPoints || 0;
-let owned       = new Set(S.owned || []);
-let activeId    = S.activeId   || null;
-let autoplayOwned   = !!S.autoplayOwned;
-let battlePassOwned = !!S.battlePassOwned;
-let pointMultiplier = Math.min(MULT_MAX, Math.max(1, Number(S.pointMultiplier) || 1));
-let rebirthCount = Math.max(0, Number(S.rebirthCount) | 0);
+        <div class="content-layout">
 
-function effectiveMultiplier() {
-  return Math.min(MULT_MAX, Math.max(1, pointMultiplier | 0));
-}
-/** Permanent income multiplier from rebirths: 1st rebirth → 2×, then +1 each time (3×, 4×, …). */
-function rebirthIncomeMultiplier() {
-  return rebirthCount + 1;
-}
-function totalEarnMultiplier() {
-  return effectiveMultiplier() * rebirthIncomeMultiplier();
-}
-function allPurchasesComplete() {
-  if (UPGRADES.some(u => !owned.has(u.id))) return false;
-  if (pointMultiplier < MULT_MAX) return false;
-  if (!autoplayOwned || !battlePassOwned) return false;
-  return true;
-}
-function nextMultiplierStepCost() {
-  if (pointMultiplier >= MULT_MAX) return null;
-  return MULT_STEP_COST[pointMultiplier - 1];
-}
+            <!-- ==========================================
+                 MAIN CONTENT
+            =========================================== -->
 
-function activeSecs() {
-  if (!activeId) return 45;
-  return UPGRADES.find(u => u.id === activeId)?.seconds ?? 45;
-}
+            <div class="main-column">
 
-// ─── Watch tracking ───────────────────────────────────────────────────────────
-let sessionPts  = 0, watchedSecs = 0, tickSecs = 0;
-let watchTimer  = null, ytPlayer = null, hasStarted = false;
-const SKIP_THRESH = 0.8;
+                <!-- ======================================
+                     SCRAPBOOK INTRO
+                ======================================= -->
 
-function startTracking() {
-  if (watchTimer) return;
-  watchTimer = setInterval(() => { watchedSecs++; tickSecs++; updateHUD(); if (tickSecs >= activeSecs()) award(); }, 1000);
-}
-function stopTracking()  { clearInterval(watchTimer); watchTimer = null; }
-function resetSession()  { stopTracking(); watchedSecs = sessionPts = tickSecs = 0; hasStarted = false; updateHUD(); }
+                <section
+                    class="scrapbook-intro paper-panel"
+                    aria-labelledby="page-heading"
+                >
+                    <div
+                        class="paper-tape paper-tape-left"
+                        aria-hidden="true"
+                    ></div>
 
-/** @param {boolean} fromVideoComplete bonus when finishing a watch */
-function award(fromVideoComplete = false) {
-  const m = totalEarnMultiplier();
-  totalPoints += m;
-  sessionPts += m;
-  tickSecs = 0;
-  const shopM = effectiveMultiplier();
-  const rbM = rebirthIncomeMultiplier();
-  let popTxt;
-  if (fromVideoComplete) {
-    popTxt = m > 1 ? `🎉 +${m}` : '🎉 +1';
-  } else {
-    if (m > 1) {
-      popTxt = rbM > 1 ? `+${m} (${shopM}× · ${rbM}×)` : `+${m} (${shopM}×)`;
-    } else {
-      popTxt = '+1';
-    }
-  }
-  saveState(); spawnPop(popTxt); updateHUD(); renderShop();
-}
+                    <div
+                        class="paper-tape paper-tape-right"
+                        aria-hidden="true"
+                    ></div>
 
-// ─── HUD ──────────────────────────────────────────────────────────────────────
-function updateHUD() {
-  const secs = activeSecs();
-  const shopM = effectiveMultiplier();
-  const mb = document.getElementById('mult-badge');
-  if (shopM > 1) {
-    mb.textContent = `${shopM}×`;
-    mb.removeAttribute('hidden');
-  } else {
-    mb.setAttribute('hidden', '');
-  }
-  const rbM = rebirthIncomeMultiplier();
-  const rbb = document.getElementById('rebirth-mult-badge');
-  if (rbM > 1) {
-    rbb.textContent = `R ${rbM}×`;
-    rbb.removeAttribute('hidden');
-  } else {
-    rbb.setAttribute('hidden', '');
-  }
-  document.getElementById('rebirth-count').textContent = String(rebirthCount);
-  document.getElementById('total-points').innerHTML = `${totalPoints} <span>pts</span>`;
-  document.getElementById('session-points').textContent = `+${sessionPts}`;
-  document.getElementById('shop-balance').textContent   = totalPoints;
-  document.getElementById('progress-fill').style.width  = Math.min(tickSecs / secs * 100, 100) + '%';
-  const rem = secs - tickSecs;
-  document.getElementById('next-point-label').textContent = `Next point in ${rem}s`;
-  document.getElementById('timer-chip').textContent = `⏱ ${secs}s`;
-}
+                    <p class="handwritten-note">
+                        play this one loud
+                    </p>
 
-function spawnPop(label) {
-  const r   = document.getElementById('points-hud').getBoundingClientRect();
-  const el  = document.createElement('div');
-  el.className   = 'point-pop';
-  el.textContent = label;
-  el.style.left  = (r.left + 36) + 'px';
-  el.style.top   = (r.top + window.scrollY - 4) + 'px';
-  document.body.appendChild(el);
-  el.addEventListener('animationend', () => el.remove());
-}
+                    <h1 id="page-heading">
+                        El Scorcho
+                    </h1>
 
-// ─── YouTube IFrame API ───────────────────────────────────────────────────────
-(function() { const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); })();
+                    <p class="intro-copy">
+                        A tiny video scrapbook for one of the
+                        greatest songs ever recorded.
+                    </p>
+                </section>
 
-/** Required on the iframe or autoplay is denied even when muted (Chrome policy). */
-const YT_IFRAME_ALLOW = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
 
-function httpPageOrigin() {
-  try {
-    const o = window.location.origin;
-    if (o && o !== 'null' && /^https?:/i.test(o)) return o;
-  } catch (_) {}
-  return undefined;
-}
+                <!-- ======================================
+                     VIDEO SECTION
+                ======================================= -->
 
-function patchYtIframe() {
-  const f = document.querySelector('#player iframe');
-  if (!f) return;
-  f.setAttribute('allow', YT_IFRAME_ALLOW);
-  f.setAttribute('allowfullscreen', '');
-  Object.assign(f.style, { width:'100%', height:'100%', border:'none', display:'block' });
-}
+                <section
+                    class="video-section"
+                    aria-labelledby="video-title"
+                >
 
-function onYouTubeIframeAPIReady() {
-  const ap = autoplayOwned ? 1 : 0;
-  const playerVars = {
-    autoplay: ap,
-    mute: ap,
-    rel: 0,
-    modestbranding: 1,
-    enablejsapi: 1,
-    playsinline: 1,
-  };
-  const orig = httpPageOrigin();
-  if (orig) playerVars.origin = orig;
+                    <div class="video-frame">
 
-  ytPlayer = new YT.Player('player', {
-    videoId: FREE_VIDEO.id,
-    playerVars,
-    events: { onReady: onPlayerReady, onStateChange: onStateChange }
-  });
-}
+                        <!--
+                            player.js replaces this element
+                            with the YouTube iframe player.
+                        -->
 
-/** If false, we mute so autoplay is allowed; after user unmutes we stop forcing mute on load. */
-let userChoseYoutubeSound = false;
+                        <div id="youtube-player"></div>
 
-/** Browsers allow autoplay without gesture only when muted (cold load / strict cases). */
-function tryStartAutoplayPlayback() {
-  if (!autoplayOwned || !ytPlayer) return;
-  try {
-    patchYtIframe();
-    if (!userChoseYoutubeSound) ytPlayer.mute();
-    ytPlayer.playVideo();
-  } catch (_) {}
-}
+                    </div>
 
-/** YouTube often stays in CUED/PAUSED briefly; short retries help play() stick. */
-function scheduleAutoplayRetries() {
-  if (!autoplayOwned) return;
-  [0, 100, 350, 700, 1400].forEach(ms => {
-    setTimeout(() => {
-      if (autoplayOwned && ytPlayer) tryStartAutoplayPlayback();
-    }, ms);
-  });
-}
 
-let autoplayUnmuteHooked = false;
-function hookAutoplayUnmuteOnFirstGesture() {
-  if (!autoplayOwned || autoplayUnmuteHooked) return;
-  autoplayUnmuteHooked = true;
-  const unmute = () => {
-    userChoseYoutubeSound = true;
-    try {
-      ytPlayer?.unMute();
-      ytPlayer?.setVolume(100);
-    } catch (_) {}
-  };
-  document.addEventListener('click', unmute, { capture: true, once: true });
-  document.addEventListener('keydown', unmute, { once: true });
-  document.addEventListener('touchend', unmute, { capture: true, once: true });
-}
+                    <!-- Optional custom progress display -->
 
-function onPlayerReady() {
-  patchYtIframe();
-  if (autoplayOwned) {
-    tryStartAutoplayPlayback();
-    scheduleAutoplayRetries();
-    hookAutoplayUnmuteOnFirstGesture();
-  }
-  updateHUD();
-}
+                    <div class="video-progress-panel">
 
-function tryAutoplayAfterLoad() {
-  if (!autoplayOwned || !ytPlayer) return;
-  setTimeout(() => {
-    tryStartAutoplayPlayback();
-    scheduleAutoplayRetries();
-    hookAutoplayUnmuteOnFirstGesture();
-  }, 50);
-}
-function onStateChange(e) {
-  const P = YT.PlayerState;
-  patchYtIframe();
-  if (autoplayOwned && e.data === P.CUED) tryStartAutoplayPlayback();
-  if (e.data === P.PLAYING)  { hasStarted = true; startTracking(); }
-  if (e.data === P.PAUSED || e.data === P.BUFFERING) { stopTracking(); updateHUD(); }
-  if (e.data === P.ENDED) {
-    stopTracking();
-    const dur = ytPlayer.getDuration();
-    if (hasStarted && dur > 0 && watchedSecs / dur >= SKIP_THRESH) { award(true); }
-    if (autoplayOwned && videos.length > 0) {
-      const nextIdx = (currentFeedIndex + 1) % videos.length;
-      goToQueueIndex(nextIdx, false);
-    } else {
-      resetSession();
-    }
-  }
-}
+                        <div class="video-time-row">
+                            <span id="video-current-time">
+                                0:00
+                            </span>
 
-// ─── Shop ─────────────────────────────────────────────────────────────────────
-function openShop()  { renderShop(); document.getElementById('shop-backdrop').classList.add('open'); }
-function closeShop() { document.getElementById('shop-backdrop').classList.remove('open'); }
-function backdropClose(e) { if (e.target.id === 'shop-backdrop') closeShop(); }
+                            <span id="video-duration">
+                                0:00
+                            </span>
+                        </div>
 
-function renderShop() {
-  document.getElementById('shop-balance').textContent = totalPoints;
-  const wrap = document.getElementById('shop-items');
-  wrap.innerHTML = '';
+                        <input
+                            id="video-progress"
+                            class="video-progress"
+                            type="range"
+                            min="0"
+                            max="1000"
+                            value="0"
+                            aria-label="Video progress"
+                        >
 
-  UPGRADES.forEach((u, i) => {
-    const isOwned   = owned.has(u.id);
-    const isActive  = u.id === activeId;
-    const prereqOk  = !u.requires || owned.has(u.requires);
-    const canAfford = totalPoints >= u.cost;
+                    </div>
 
-    const div = document.createElement('div');
-    div.className = 'shop-item' + (!isOwned && prereqOk && canAfford ? ' can-buy' : '');
-    if (!isOwned && prereqOk && canAfford) div.onclick = () => purchase(u.id);
+                </section>
 
-    let rightHTML;
-    if (isOwned) {
-      rightHTML = `<span class="buy-btn tag-owned">✓ Owned</span>`;
-    } else if (!prereqOk) {
-      rightHTML = `<button class="buy-btn" disabled>🔒 ${UPGRADES[i-1]?.name}</button>`;
-    } else {
-      rightHTML = `<button class="buy-btn" ${canAfford ? '' : 'disabled'}>${canAfford ? `Buy · ${u.cost} pts` : `Need ${u.cost - totalPoints} more`}</button>`;
-    }
 
-    div.innerHTML = `
-      <div class="shop-item-icon" style="background:${u.bg}">${u.icon}</div>
-      <div class="shop-item-body">
-        <div class="shop-item-name">${u.name}${isActive ? ' <span class="active-badge">● ACTIVE</span>' : ''}</div>
-        <div class="shop-item-desc">${u.desc}</div>
-        ${isOwned ? `<div class="shop-item-unlocked">⚡ 1 pt every ${u.seconds}s</div>` : ''}
-        ${!prereqOk ? `<div class="shop-item-locked">🔒 Unlock "${UPGRADES[i-1]?.name}" first</div>` : ''}
-      </div>
-      <div class="shop-item-right">${rightHTML}</div>`;
+                <!-- ======================================
+                     VIDEO INFORMATION
+                ======================================= -->
 
-    wrap.appendChild(div);
-    if (i < UPGRADES.length - 1) { const d = document.createElement('div'); d.className = 'shop-divider'; wrap.appendChild(d); }
-  });
+                <section class="video-info paper-panel">
 
-  const mwrap = document.getElementById('shop-multiplier');
-  mwrap.innerHTML = '';
-  const mCur = effectiveMultiplier();
-  if (mCur >= MULT_MAX) {
-    const perTick = MULT_MAX * rebirthIncomeMultiplier();
-    const div = document.createElement('div');
-    div.className = 'shop-item';
-    div.innerHTML = `
-      <div class="shop-item-icon" style="background:#241828">10×</div>
-      <div class="shop-item-body">
-        <div class="shop-item-name">Point multiplier maxed</div>
-        <div class="shop-item-desc">Shop is <strong>${MULT_MAX}×</strong>; with your rebirth boost you earn <strong>${perTick} points</strong> per tick and on full video bonuses.</div>
-        <div class="shop-item-unlocked">🔥 ${MULT_MAX}× shop × ${rebirthIncomeMultiplier()}× rebirth</div>
-      </div>
-      <div class="shop-item-right"><span class="buy-btn tag-owned">Max</span></div>`;
-    mwrap.appendChild(div);
-  } else {
-    const cost = nextMultiplierStepCost();
-    const nextM = mCur + 1;
-    const rbm = rebirthIncomeMultiplier();
-    const canAfford = totalPoints >= cost;
-    const div = document.createElement('div');
-    div.className = 'shop-item' + (canAfford ? ' can-buy' : '');
-    if (canAfford) div.onclick = purchaseMultiplier;
-    div.innerHTML = `
-      <div class="shop-item-icon" style="background:#2a1420">✨</div>
-      <div class="shop-item-body">
-        <div class="shop-item-name">Upgrade to ${nextM}×</div>
-        <div class="shop-item-desc">Each tick and completion bonus: <strong>${nextM * rbm} pts</strong> (shop ${nextM}× × rebirth ${rbm}×). Max shop ${MULT_MAX}×.</div>
-        <div class="shop-item-unlocked" style="margin-top:4px">Now: ${mCur * rbm} pts per earn (${mCur}× × ${rbm}×)</div>
-      </div>
-      <div class="shop-item-right">
-        <button class="buy-btn" ${canAfford ? '' : 'disabled'}>${canAfford ? `Buy · ${cost} pts` : `Need ${cost - totalPoints} more`}</button>
-      </div>`;
-    mwrap.appendChild(div);
-  }
+                    <div
+                        class="paper-tape"
+                        aria-hidden="true"
+                    ></div>
 
-  const xwrap = document.getElementById('shop-extras');
-  xwrap.innerHTML = '';
-  EXTRA_SHOP.forEach((ex, xi) => {
-    const isOwned = ex.id === 'feat_autoplay' ? autoplayOwned
-      : ex.id === 'feat_battlepass' ? battlePassOwned : false;
-    const canAfford = totalPoints >= ex.cost;
-    const div = document.createElement('div');
-    div.className = 'shop-item' + (!isOwned && canAfford ? ' can-buy' : '');
-    if (!isOwned && canAfford) div.onclick = () => purchaseExtra(ex.id);
+                    <h2
+                        id="video-title"
+                        class="video-title"
+                    >
+                        El Scorcho
+                    </h2>
 
-    const btnClass = ex.battlePassClass ? 'buy-btn battle-pass' : 'buy-btn';
-    let rightHTML;
-    if (isOwned) {
-      rightHTML = `<span class="buy-btn tag-owned">✓ Owned</span>`;
-    } else {
-      rightHTML = `<button class="${btnClass}" ${canAfford ? '' : 'disabled'}>${canAfford ? `Buy · ${ex.cost} pts` : `Need ${ex.cost - totalPoints} more`}</button>`;
-    }
+                    <p
+                        id="video-channel"
+                        class="video-channel"
+                    >
+                        Weezer
+                    </p>
 
-    div.innerHTML = `
-      <div class="shop-item-icon" style="background:${ex.bg}">${ex.icon}</div>
-      <div class="shop-item-body">
-        <div class="shop-item-name">${ex.name}</div>
-        <div class="shop-item-desc">${ex.desc}</div>
-        ${isOwned && ex.id === 'feat_battlepass' ? `<div class="shop-item-unlocked">Playlist unlocked in Up Next</div>` : ''}
-        ${isOwned && ex.id === 'feat_autoplay' ? `<div class="shop-item-unlocked">Autoplay + auto-advance queue (muted until you interact)</div>` : ''}
-      </div>
-      <div class="shop-item-right">${rightHTML}</div>`;
-    xwrap.appendChild(div);
-    if (xi < EXTRA_SHOP.length - 1) { const d = document.createElement('div'); d.className = 'shop-divider'; xwrap.appendChild(d); }
-  });
+                    <p
+                        class="video-description"
+                        data-current-video-note
+                    >
+                        The main event.
+                    </p>
 
-  const rbWrap = document.getElementById('shop-rebirth');
-  rbWrap.innerHTML = '';
-  const canRb = allPurchasesComplete();
-  const nextRunR = rebirthCount + 2;
-  const curR = rebirthIncomeMultiplier();
-  const rbDiv = document.createElement('div');
-  rbDiv.className = 'shop-item' + (canRb ? ' can-buy' : '');
-  if (canRb) rbDiv.onclick = () => rebirth();
-  rbDiv.innerHTML = `
-    <div class="shop-item-icon" style="background:#0f2f1a">🔁</div>
-    <div class="shop-item-body">
-      <div class="shop-item-name">Rebirth</div>
-      <div class="shop-item-desc">Requires every timer upgrade, <strong>${MULT_MAX}×</strong> point multiplier, <strong>Instant Play</strong>, and <strong>Battle Pass</strong>. Resets points and all purchases, keeps your rebirth tier. Permanent boost: <strong>${curR}×</strong> → <strong>${nextRunR}×</strong> on points earned (stacks with shop multiplier).</div>
-      ${canRb ? `<div class="shop-item-unlocked">Ready — your next tier is ${nextRunR}×</div>` : `<div class="shop-item-locked">🔒 Max the shop first</div>`}
-    </div>
-    <div class="shop-item-right">
-      ${canRb
-        ? `<button type="button" class="buy-btn rebirth-btn">🔁 Rebirth</button>`
-        : `<button type="button" class="buy-btn" disabled>Locked</button>`}
-    </div>`;
-  rbWrap.appendChild(rbDiv);
-}
 
-function rebirth() {
-  if (!allPurchasesComplete()) return;
-  rebirthCount++;
-  totalPoints = 0;
-  owned = new Set();
-  activeId = null;
-  pointMultiplier = 1;
-  autoplayOwned = false;
-  battlePassOwned = false;
-  userChoseYoutubeSound = false;
-  autoplayUnmuteHooked = false;
-  tickSecs = 0;
-  sessionPts = 0;
-  watchedSecs = 0;
-  hasStarted = false;
-  stopTracking();
-  videos = buildVideoList();
-  currentFeedIndex = 0;
-  currentId = videos[0].id;
-  document.getElementById('main-title').textContent = FREE_VIDEO.title;
-  if (ytPlayer) {
-    try {
-      ytPlayer.loadVideoById(FREE_VIDEO.id);
-    } catch (_) {}
-  }
-  renderFeed();
-  saveState();
-  spawnPop(`🔁 Rebirth #${rebirthCount}!`);
-  updateHUD();
-  renderShop();
-  closeShop();
-  const hud = document.getElementById('points-hud');
-  hud.classList.remove('hud-flash'); void hud.offsetWidth; hud.classList.add('hud-flash');
-}
+                    <div class="video-actions">
 
-function purchaseMultiplier() {
-  if (pointMultiplier >= MULT_MAX) return;
-  const cost = nextMultiplierStepCost();
-  if (cost == null || totalPoints < cost) return;
-  totalPoints -= cost;
-  pointMultiplier++;
-  saveState();
-  spawnPop('✨');
-  updateHUD();
-  renderShop();
-  const hud = document.getElementById('points-hud');
-  hud.classList.remove('hud-flash'); void hud.offsetWidth; hud.classList.add('hud-flash');
-}
+                        <button
+                            id="video-like"
+                            class="btn"
+                            type="button"
+                        >
+                            ♥ Like
+                        </button>
 
-function purchaseExtra(id) {
-  const ex = EXTRA_SHOP.find(e => e.id === id);
-  if (!ex) return;
-  if (id === 'feat_autoplay' && autoplayOwned) return;
-  if (id === 'feat_battlepass' && battlePassOwned) return;
-  if (totalPoints < ex.cost) return;
+                        <button
+                            id="video-random"
+                            class="btn"
+                            type="button"
+                        >
+                            Random Tape
+                        </button>
 
-  totalPoints -= ex.cost;
-  if (id === 'feat_autoplay') {
-    autoplayOwned = true;
-    userChoseYoutubeSound = false;
-    autoplayUnmuteHooked = false;
-    tryStartAutoplayPlayback();
-    scheduleAutoplayRetries();
-    hookAutoplayUnmuteOnFirstGesture();
-  }
-  if (id === 'feat_battlepass') {
-    battlePassOwned = true;
-    const prevId = currentId;
-    videos = buildVideoList();
-    let idx = videos.findIndex(x => x.id === prevId);
-    currentFeedIndex = idx >= 0 ? idx : 0;
-    currentId = videos[currentFeedIndex].id;
-    renderFeed();
-  }
+                        <button
+                            id="video-previous"
+                            class="btn"
+                            type="button"
+                        >
+                            Previous
+                        </button>
 
-  saveState();
-  spawnPop(id === 'feat_battlepass' ? '🎫' : '▶️');
-  updateHUD();
-  renderShop();
+                        <button
+                            id="video-next"
+                            class="btn"
+                            type="button"
+                        >
+                            Next
+                        </button>
 
-  const hud = document.getElementById('points-hud');
-  hud.classList.remove('hud-flash'); void hud.offsetWidth; hud.classList.add('hud-flash');
-}
+                    </div>
 
-function purchase(id) {
-  const u = UPGRADES.find(u => u.id === id);
-  if (!u || owned.has(id) || totalPoints < u.cost) return;
-  if (u.requires && !owned.has(u.requires)) return;
+                </section>
 
-  totalPoints -= u.cost;
-  owned.add(id);
-  activeId = id;
-  tickSecs = 0; // reset progress toward next point
-  saveState(); spawnPop('🛒'); updateHUD(); renderShop();
 
-  // Flash HUD border
-  const hud = document.getElementById('points-hud');
-  hud.classList.remove('hud-flash'); void hud.offsetWidth; hud.classList.add('hud-flash');
-}
+                <!-- ======================================
+                     CASSETTE DECORATION
+                ======================================= -->
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-function buildVideoList() {
-  const base = [FREE_VIDEO, ...PASS_CATALOG];
-  if (battlePassOwned) {
-    const out = [];
-    for (let i = 0; i < 21; i++) out.push(base[i % base.length]);
-    return out;
-  }
-  return Array.from({ length: 21 }, () => ({ ...FREE_VIDEO }));
-}
+                <section
+                    class="cassette-section"
+                    aria-label="Cassette decoration"
+                >
+                    <div class="cassette">
+                        <span class="cassette-label">
+                            Pinkerton Side A
+                        </span>
+                    </div>
+                </section>
 
-let videos = buildVideoList();
-let currentFeedIndex = 0;
-let currentId = videos[0].id;
 
-/** @param {boolean} useLoaderDelay sidebar picks use a short spinner delay */
-function goToQueueIndex(index, useLoaderDelay) {
-  const v = videos[index];
-  if (!ytPlayer || !v) return;
-  resetSession();
-  currentFeedIndex = index;
-  currentId = v.id;
-  document.getElementById('main-title').textContent = v.title;
-  const loader = document.getElementById('loader');
-  const runLoad = () => {
-    ytPlayer.loadVideoById(v.id);
-    tryAutoplayAfterLoad();
-    if (useLoaderDelay) setTimeout(() => loader.classList.remove('show'), 600);
-  };
-  renderFeed();
-  if (useLoaderDelay) {
-    loader.classList.add('show');
-    setTimeout(runLoad, 400);
-  } else {
-    setTimeout(runLoad, 120);
-  }
-}
+                <!-- ======================================
+                     COMMENTS
+                ======================================= -->
 
-function changeVideo(index) {
-  goToQueueIndex(index, true);
-}
+                <section
+                    class="comments"
+                    aria-labelledby="comments-heading"
+                >
 
-function renderFeed() {
-  const feed = document.getElementById('feed'); feed.innerHTML = '';
-  videos.forEach((v, i) => {
-    const c = document.createElement('div');
-    const isCurrent = i === currentFeedIndex;
-    c.className = 'card' + (isCurrent ? ' active' : '');
-    c.innerHTML = `
-      ${isCurrent ? '<div class="active-bar"></div>' : ''}
-      <div class="thumb-wrap">
-        <img src="https://img.youtube.com/vi/${v.id}/mqdefault.jpg" alt="${v.title}"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <div class="thumb-fallback" style="display:none"></div>
-        <span class="play-badge">${isCurrent ? '▶ NOW' : '▶'}</span>
-      </div>
-      <div class="card-info">
-        <div class="card-title">${v.title}</div>
-        <div class="card-channel">${v.channel}</div>
-        <div class="card-meta">${v.meta}</div>
-      </div>`;
-    if (!isCurrent) c.onclick = () => changeVideo(i);
-    feed.appendChild(c);
-  });
-}
+                    <h2 id="comments-heading">
+                        Notebook Comments
+                    </h2>
 
-// ─── Comments ─────────────────────────────────────────────────────────────────
-const COMMENTS = [
-  { name:'rivers_fan96',   color:'#5b4fcf', initial:'R', time:'3 years ago',   likes:'12K',   text:'this song coming on shuffle at 2am hits different every single time' },
-  { name:'XxFortnite_GamerxX',  color:'#168fd8', initial:'F', time:'1 year ago',    likes:'6.7K', text:'When will they collab with fortnite festival?' },
-  { name:'shane_m',        color:'#cc0000', initial:'S', time:'1 year ago',    likes:'862.4K', text:'Big fan!' },
-  { name:'weezerweekly',   color:'#1a73e8', initial:'W', time:'5 years ago',   likes:'6.1K',  text:'The fact that this was considered a flop when it came out makes me lose all faith in contemporary music criticism' },
-  { name:'weezerhater67', color:'#0f9d58', initial:'W', time:'2 years ago',   likes:'3.2K',  text:"This sucks!" },
-  { name:'melonhead44',    color:'#f4a300', initial:'M', time:'8 months ago',  likes:'2.9K',  text:'i played this at my wedding. my wife cried. i cried. the priest cried. 10/10 would recommend' },
-  { name:'quietstorm_77',  color:'#9c27b0', initial:'Q', time:'4 years ago',   likes:'1.7K',  text:'love it!' },
-  { name:'degreelessdan',  color:'#e91e63', initial:'D', time:'11 months ago', likes:'987',   text:"came here from a tiktok that used 0.3 seconds of this song and now I've listened to pinkerton front to back four times today" },
-  { name:'karlophone',     color:'green',   initial:'K', time:'6 years ago',   likes:'754.4K', text:'🙂' },
-];
 
-function renderComments() {
-  const list = document.getElementById('comments-list'); list.innerHTML = '';
-  COMMENTS.forEach(c => {
-    const el = document.createElement('div'); el.className = 'comment';
-    el.innerHTML = `
-      <div class="comment-avatar" style="background:${c.color};width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">${c.initial}</div>
-      <div class="comment-body">
-        <div class="comment-author">@${c.name} <span>${c.time}</span></div>
-        <div class="comment-text">${c.text}</div>
-        <div class="comment-actions">
-          <span class="comment-like">👍 ${c.likes}</span>
-          <span class="comment-like">👎</span>
-          <button class="reply-btn">Reply</button>
+                    <!-- Comment form -->
+
+                    <div class="comment-box">
+
+                        <div
+                            class="comment-avatar"
+                            aria-hidden="true"
+                        ></div>
+
+                        <form
+                            id="comment-form"
+                            class="comment-form"
+                        >
+
+                            <label
+                                class="sr-only"
+                                for="comment-input"
+                            >
+                                Write a comment
+                            </label>
+
+                            <textarea
+                                id="comment-input"
+                                name="comment"
+                                maxlength="500"
+                                placeholder="write something in the notebook..."
+                                required
+                            ></textarea>
+
+                            <div class="comment-actions">
+
+                                <button
+                                    class="comment-submit"
+                                    type="submit"
+                                >
+                                    Post Comment
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+
+                    <!-- Comment list -->
+
+                    <div
+                        id="comment-list"
+                        class="comment-list"
+                        aria-live="polite"
+                    >
+
+                        <article class="comment pinned">
+
+                            <img
+                                src="elscorcho/images/avatar-rivers.png"
+                                alt=""
+                            >
+
+                            <div class="comment-content">
+
+                                <div class="comment-author">
+                                    El Scorcho Archive
+                                    <span
+                                        class="verified"
+                                        title="Verified"
+                                    >
+                                        ●
+                                    </span>
+                                </div>
+
+                                <div class="comment-date">
+                                    pinned forever
+                                </div>
+
+                                <p class="comment-text">
+                                    How stupid is it? I can't talk
+                                    about it.
+                                </p>
+
+                                <div class="comment-footer">
+
+                                    <button
+                                        class="comment-like"
+                                        type="button"
+                                    >
+                                        ♥ Like
+                                    </button>
+
+                                    <span class="comment-score">
+                                        1,996
+                                    </span>
+
+                                    <button
+                                        class="comment-reply"
+                                        type="button"
+                                    >
+                                        Reply
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </article>
+
+
+                        <article class="comment">
+
+                            <img
+                                src="elscorcho/images/avatar-default.png"
+                                alt=""
+                            >
+
+                            <div class="comment-content">
+
+                                <div class="comment-author">
+                                    Pink Triangle
+                                </div>
+
+                                <div class="comment-date">
+                                    a while ago
+                                </div>
+
+                                <p class="comment-text">
+                                    This tape has been stuck in my
+                                    stereo for several weeks.
+                                </p>
+
+                                <div class="comment-footer">
+
+                                    <button
+                                        class="comment-like"
+                                        type="button"
+                                    >
+                                        ♥ Like
+                                    </button>
+
+                                    <span class="comment-score">
+                                        42
+                                    </span>
+
+                                    <button
+                                        class="comment-reply"
+                                        type="button"
+                                    >
+                                        Reply
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </article>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <!-- ==========================================
+                 SIDEBAR / VIDEO FEED
+            =========================================== -->
+
+            <aside
+                class="sidebar"
+                aria-labelledby="feed-heading"
+            >
+
+                <h2 id="feed-heading">
+                    Up Next
+                </h2>
+
+                <!-- feed.js inserts the video cards here -->
+
+                <div id="feed"></div>
+
+            </aside>
+
         </div>
-      </div>`;
-    list.appendChild(el);
-  });
-}
 
-// ─── Misc UI ──────────────────────────────────────────────────────────────────
-let descExpanded = false, toastTimer = null;
-function copyLink() {
-  navigator.clipboard.writeText(window.location.href).then(showToast).catch(() => {
-    const ta = document.createElement('textarea'); ta.value = window.location.href;
-    ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast();
-  });
-}
-function showToast() {
-  const t = document.getElementById('copy-toast'); t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
-}
-function toggleDesc() {
-  descExpanded = !descExpanded;
-  document.getElementById('desc-text').classList.toggle('collapsed', !descExpanded);
-  document.getElementById('desc-toggle').textContent = descExpanded ? 'Show less' : '...more';
-}
+    </main>
 
-// ─── Dev admin ────────────────────────────────────────────────────────────────
-function adminGrantPts() {
-  const raw = document.getElementById('admin-amount').value;
-  const n = Math.max(1, parseInt(raw, 10) || 100);
-  totalPoints += n;
-  saveState();
-  spawnPop('+' + n + ' (dev)');
-  updateHUD();
-  renderShop();
-}
 
-function adminIsTypingTarget(el) {
-  if (!el || el === document.body) return false;
-  const tag = el.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
-  if (el.isContentEditable) return true;
-  return adminIsTypingTarget(el.parentElement);
-}
+    <!-- ==================================================
+         SHOP MODAL
+    =================================================== -->
 
-function toggleAdminPanel() {
-  const p = document.getElementById('admin-panel');
-  const open = p.classList.toggle('open');
-  p.setAttribute('aria-hidden', open ? 'false' : 'true');
-}
+    <div
+        id="shop-backdrop"
+        aria-hidden="true"
+    >
 
-if (ADMIN_MODE) {
-  document.getElementById('admin-grant-once').addEventListener('click', adminGrantPts);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === '`' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      e.preventDefault();
-      toggleAdminPanel();
-      return;
-    }
-    if (e.key !== 'p' && e.key !== 'P') return;
-    if (adminIsTypingTarget(e.target)) return;
-    e.preventDefault();
-    adminGrantPts();
-  });
-} else {
-  document.getElementById('admin-panel').remove();
-}
+        <section
+            id="shop-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="shop-title"
+        >
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
-renderFeed(); renderComments(); updateHUD();
-</script>
+            <button
+                id="shop-close"
+                class="shop-close"
+                type="button"
+                aria-label="Close shop"
+            >
+                ×
+            </button>
+
+
+            <!-- Shop header -->
+
+            <header id="shop-header">
+
+                <div>
+
+                    <h2
+                        id="shop-title"
+                        class="shop-title"
+                    >
+                        Merch Table
+                    </h2>
+
+                    <p class="shop-subtitle">
+                        Trade your Scorcho Points for
+                        questionable upgrades.
+                    </p>
+
+                </div>
+
+                <div class="shop-balance">
+
+                    Current balance
+
+                    <strong id="shop-points-value">
+                        0
+                    </strong>
+
+                </div>
+
+            </header>
+
+
+            <!-- Upgrades -->
+
+            <section id="shop-items">
+
+                <h3 class="shop-section-title">
+                    Tape Upgrades
+                </h3>
+
+                <div
+                    id="shop-grid"
+                    class="shop-grid"
+                >
+
+                    <article
+                        class="shop-item"
+                        data-shop-item="cheap-headphones"
+                    >
+
+                        <div class="shop-item-art">
+                            <span
+                                class="shop-item-icon"
+                                aria-hidden="true"
+                            >
+                                🎧
+                            </span>
+                        </div>
+
+                        <h4 class="shop-item-name">
+                            Cheap Headphones
+                        </h4>
+
+                        <p class="shop-item-description">
+                            Earn slightly more points while
+                            watching videos.
+                        </p>
+
+                        <span class="shop-item-level">
+                            Level
+                            <span data-item-level>0</span>
+                        </span>
+
+                        <p class="shop-item-effect">
+                            +1 point per second
+                        </p>
+
+                        <div class="shop-item-footer">
+
+                            <span class="shop-price">
+                                Cost
+                                <strong data-item-price>
+                                    25
+                                </strong>
+                            </span>
+
+                            <button
+                                class="shop-buy"
+                                type="button"
+                                data-buy-item="cheap-headphones"
+                            >
+                                Buy
+                            </button>
+
+                        </div>
+
+                    </article>
+
+
+                    <article
+                        class="shop-item"
+                        data-shop-item="pinkerton-cd"
+                    >
+
+                        <div class="shop-item-art">
+                            <span
+                                class="shop-item-icon"
+                                aria-hidden="true"
+                            >
+                                💿
+                            </span>
+                        </div>
+
+                        <h4 class="shop-item-name">
+                            Scratched Pinkerton CD
+                        </h4>
+
+                        <p class="shop-item-description">
+                            It skips occasionally, but somehow
+                            increases your click power.
+                        </p>
+
+                        <span class="shop-item-level">
+                            Level
+                            <span data-item-level>0</span>
+                        </span>
+
+                        <p class="shop-item-effect">
+                            +2 click power
+                        </p>
+
+                        <div class="shop-item-footer">
+
+                            <span class="shop-price">
+                                Cost
+                                <strong data-item-price>
+                                    75
+                                </strong>
+                            </span>
+
+                            <button
+                                class="shop-buy"
+                                type="button"
+                                data-buy-item="pinkerton-cd"
+                            >
+                                Buy
+                            </button>
+
+                        </div>
+
+                    </article>
+
+
+                    <article
+                        class="shop-item"
+                        data-shop-item="old-television"
+                    >
+
+                        <div class="shop-item-art">
+                            <span
+                                class="shop-item-icon"
+                                aria-hidden="true"
+                            >
+                                📺
+                            </span>
+                        </div>
+
+                        <h4 class="shop-item-name">
+                            Old Television
+                        </h4>
+
+                        <p class="shop-item-description">
+                            Adds a suspicious permanent boost
+                            to video rewards.
+                        </p>
+
+                        <span class="shop-item-level">
+                            Level
+                            <span data-item-level>0</span>
+                        </span>
+
+                        <p class="shop-item-effect">
+                            +10% video rewards
+                        </p>
+
+                        <div class="shop-item-footer">
+
+                            <span class="shop-price">
+                                Cost
+                                <strong data-item-price>
+                                    250
+                                </strong>
+                            </span>
+
+                            <button
+                                class="shop-buy"
+                                type="button"
+                                data-buy-item="old-television"
+                            >
+                                Buy
+                            </button>
+
+                        </div>
+
+                    </article>
+
+                </div>
+
+            </section>
+
+
+            <!-- Multiplier -->
+
+            <section id="shop-multiplier">
+
+                <div class="multiplier-row">
+
+                    <div>
+
+                        <h3 class="shop-section-title">
+                            Current Multiplier
+                        </h3>
+
+                        <p class="multiplier-description">
+                            Applies to points earned while
+                            watching videos.
+                        </p>
+
+                    </div>
+
+                    <strong
+                        id="multiplier-value"
+                        class="multiplier-value"
+                    >
+                        ×1
+                    </strong>
+
+                </div>
+
+            </section>
+
+
+            <!-- Extras -->
+
+            <section id="shop-extras">
+
+                <h3 class="shop-section-title">
+                    Other Stuff
+                </h3>
+
+                <article class="shop-extra">
+
+                    <div>
+
+                        <h4 class="shop-extra-name">
+                            VHS Mode
+                        </h4>
+
+                        <p class="shop-extra-description">
+                            Adds scanlines and unstable tracking.
+                        </p>
+
+                    </div>
+
+                    <button
+                        id="vhs-toggle"
+                        class="shop-buy"
+                        type="button"
+                    >
+                        Toggle
+                    </button>
+
+                </article>
+
+
+                <article class="shop-extra">
+
+                    <div>
+
+                        <h4 class="shop-extra-name">
+                            Export Save
+                        </h4>
+
+                        <p class="shop-extra-description">
+                            Download a backup of your progress.
+                        </p>
+
+                    </div>
+
+                    <button
+                        id="save-export"
+                        class="shop-buy"
+                        type="button"
+                    >
+                        Export
+                    </button>
+
+                </article>
+
+
+                <article class="shop-extra">
+
+                    <div>
+
+                        <h4 class="shop-extra-name">
+                            Import Save
+                        </h4>
+
+                        <p class="shop-extra-description">
+                            Restore progress from a JSON file.
+                        </p>
+
+                    </div>
+
+                    <label
+                        class="shop-buy"
+                        for="save-import"
+                    >
+                        Import
+                    </label>
+
+                    <input
+                        id="save-import"
+                        type="file"
+                        accept="application/json,.json"
+                        hidden
+                    >
+
+                </article>
+
+            </section>
+
+
+            <!-- Rebirth -->
+
+            <section id="shop-rebirth">
+
+                <h3 class="rebirth-title">
+                    Start the Tape Again
+                </h3>
+
+                <p class="rebirth-description">
+                    Reset ordinary upgrades and points in
+                    exchange for a permanent multiplier.
+                </p>
+
+                <div class="rebirth-reward">
+                    Reward:
+                    <span id="rebirth-reward-value">
+                        ×0
+                    </span>
+                </div>
+
+                <br>
+
+                <button
+                    id="rebirth-button"
+                    class="rebirth-button"
+                    type="button"
+                    disabled
+                >
+                    Rewind Everything
+                </button>
+
+            </section>
+
+        </section>
+
+    </div>
+
+
+    <!-- ==================================================
+         TOAST MESSAGE
+    =================================================== -->
+
+    <div
+        id="shop-toast"
+        class="shop-toast"
+        role="status"
+        aria-live="polite"
+    ></div>
+
+
+    <!-- ==================================================
+         VIDEO FEED DATA
+    =================================================== -->
+
+    <script>
+        window.EL_SCORCHO_VIDEOS = [
+            {
+                id: "okthJIVbi6g",
+                title: "El Scorcho",
+                channel: "Weezer",
+                duration: "4:04",
+                views: "12M views",
+                age: "8 years ago",
+                thumbnail:
+                    "https://img.youtube.com/vi/okthJIVbi6g/hqdefault.jpg",
+                note: "the main event",
+                badge: "classic"
+            },
+            {
+                id: "vGgWkvD2vGQ",
+                title: "The Good Life",
+                channel: "Weezer",
+                duration: "4:19",
+                views: "9M views",
+                age: "8 years ago",
+                thumbnail:
+                    "https://img.youtube.com/vi/vGgWkvD2vGQ/hqdefault.jpg",
+                note: "play this one loud"
+            },
+            {
+                id: "okthJIVbi6g",
+                title: "El Scorcho — Replay",
+                channel: "El Scorcho Archive",
+                duration: "4:04",
+                views: "favorite",
+                age: "forever ago",
+                thumbnail:
+                    "elscorcho/images/thumbnail.png",
+                note: "again, obviously"
+            }
+        ];
+    </script>
+
+
+    <!-- ==================================================
+         JAVASCRIPT MODULES
+
+         Order matters. main.js must load last.
+    =================================================== -->
+
+    <script src="elscorcho/mixtapes/save.js"></script>
+    <script src="elscorcho/mixtapes/upgrades.js"></script>
+    <script src="elscorcho/mixtapes/player.js"></script>
+    <script src="elscorcho/mixtapes/feed.js"></script>
+    <script src="elscorcho/mixtapes/shop.js"></script>
+    <script src="elscorcho/mixtapes/comments.js"></script>
+    <script src="elscorcho/mixtapes/ui.js"></script>
+    <script src="elscorcho/mixtapes/main.js"></script>
+
 </body>
 </html>
